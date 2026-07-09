@@ -19,3 +19,31 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+THIRD-PARTY ATTRIBUTIONS
+
+The bundled materials in the /materials directory are derivative works adapted
+from third-party sources. Original licenses are preserved below.
+
+1. unified-conversation-design-principles.md
+   Adapted from Google Conversation Design (https://developers.google.com/assistant/conversation-design)
+   Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)
+   https://creativecommons.org/licenses/by/4.0/
+   Original work by Google LLC.
+
+   Also incorporates concepts from:
+   Grice, H.P. (1975). Logic and Conversation. In P. Cole & J. Morgan (Eds.),
+   Syntax and Semantics, Vol. 3: Speech Acts (pp. 41–58). Academic Press.
+
+2. design-system-material3.md
+   Adapted from Material Design 3 (https://m3.material.io/)
+   Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)
+   https://creativecommons.org/licenses/by/4.0/
+   Original work by Google LLC.
+
+3. design-system-ant-design-x.md
+   Adapted from Ant Design X (https://x.ant.design/)
+   Licensed under the MIT License
+   Original work by Ant Group.

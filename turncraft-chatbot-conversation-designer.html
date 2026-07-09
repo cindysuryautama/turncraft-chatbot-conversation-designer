@@ -1,0 +1,3583 @@
+<!DOCTYPE html><script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Chatbot Conversation Designer",
+  "schemaVersion": 1,
+  "description": "AI-powered chatbot conversation design tool. Enter a user intent → Claude generates scenario branches → edit and refine scenarios → Claude generates governed phone-sim responses per scenario. Includes editable bot personas, design tweaks, and prompt spec export."
+}
+</script>
+<html lang="en">
+<!--
+  Turncraft: Chatbot conversation designer
+  Copyright (c) 2026 Cindy Suryautama Sukiato
+  Licensed under the MIT License — see LICENSE file for details.
+
+  Bundled materials attribution:
+  - Conversation design principles adapted from H.P. Grice, "Logic and Conversation" (1975)
+    and Google Conversation Design (https://developers.google.com/assistant/conversation-design),
+    licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+  - Design system guidance adapted from Material Design 3 by Google (https://m3.material.io/),
+    licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
+  - Design system guidance adapted from Ant Design X by Ant Group (https://x.ant.design/),
+    licensed under the MIT License.
+-->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turncraft: Chatbot conversation designer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAFAF8;--surface:#F4F4F0;--fg:#1A1A1A;--fg-2:#4A4A4A;--fg-3:#8A8A86;--fg-4:#C0C0BB;
+  --border:#EBEBE8;--border-2:#D4D4CF;--accent:#D4A017;--accent-deep:#8A6A0E;
+  --accent-soft:rgba(212,160,23,0.12);--hover-tint:rgba(0,0,0,0.04);
+  --r-sm:5px;--r-md:10px;--r-lg:16px;--r-pill:999px;
+  --font-sans:'Inter',system-ui,sans-serif;--font-mono:'JetBrains Mono',monospace;
+  --shadow-card:0 1px 3px rgba(0,0,0,0.05),0 4px 12px rgba(0,0,0,0.04);
+  --shadow-hover:0 4px 16px rgba(0,0,0,0.09),0 12px 36px rgba(0,0,0,0.06);
+  --dur:160ms;--ease:cubic-bezier(0.25,0,0.1,1);
+  --status-high:#B91C1C;--status-good:#1a7a4a;--status-warn:#c05c00;
+  --ph-bg:#0B0B0B;--ph-surface:#161616;--ph-surface-2:#1E1E1E;
+  --ph-fg:#F0F0F0;--ph-fg-2:#A0A0A0;--ph-lime:#D966FF;
+  --ph-red:#FF3B30;--ph-amber:#F59E0B;--ph-blue:#4A90D9;--ph-border:rgba(255,255,255,0.08);
+}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--fg);height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:2px}
+
+/* Layout */
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;z-index:400}.topbar--with-sub{height:64px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-logo{width:28px;height:28px;border-radius:7px;background:var(--fg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.topbar-title{font-size:14px;font-weight:600;letter-spacing:-0.01em}.topbar-text-group{display:flex;flex-direction:column;gap:1px}.topbar-sub{font-size:11px;color:var(--text-secondary);font-weight:400;letter-spacing:0.01em}
+.topbar-beta{font-size:10px;font-weight:500;font-family:var(--font-mono);background:var(--accent-soft);color:var(--accent-deep);padding:2px 7px;border-radius:var(--r-pill);letter-spacing:0.04em;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:8px}
+
+/* Buttons */
+.btn-ghost{background:none;border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 13px;font-size:12px;font-family:var(--font-sans);color:var(--fg-2);cursor:pointer;transition:all var(--dur) var(--ease);white-space:nowrap}
+.btn-ghost:hover{background:var(--hover-tint);border-color:var(--border-2);color:var(--fg)}
+.btn-primary{background:var(--fg);color:var(--bg);border:none;padding:8px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:500;font-family:var(--font-sans);cursor:pointer;transition:background var(--dur) var(--ease);width:100%}
+.btn-primary:hover{background:#333}.btn-primary:disabled{opacity:.35;cursor:not-allowed}
+.btn-outline{background:none;border:1px solid var(--border-2);padding:9px 20px;border-radius:var(--r-sm);font-size:13px;font-weight:500;font-family:var(--font-sans);color:var(--fg-2);cursor:pointer;transition:all var(--dur) var(--ease)}
+.btn-outline:hover{border-color:var(--fg-3);color:var(--fg);background:var(--hover-tint)}
+.btn-sm{background:var(--fg);color:var(--bg);border:none;padding:7px 14px;border-radius:var(--r-sm);font-size:12px;font-weight:500;font-family:var(--font-sans);cursor:pointer;width:100%}
+.btn-sm:disabled{opacity:.35;cursor:not-allowed}
+.btn-accent-sm{font-size:11px;font-weight:500;font-family:var(--font-sans);background:var(--accent);color:#fff;border:none;padding:4px 11px;border-radius:var(--r-pill);cursor:pointer}
+.btn-muted-sm{font-size:11px;color:var(--fg-3);background:none;border:none;cursor:pointer;font-family:var(--font-sans);padding:4px 0}
+.btn-muted-sm:hover{color:var(--fg-2)}
+
+/* Step bar */
+.step-bar{display:flex;align-items:center;justify-content:center;gap:0;padding:10px 24px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.step-item{display:flex;align-items:center;gap:8px;position:relative;cursor:default}
+.step-item[data-action]{cursor:pointer}
+.step-item[data-action]:hover .step-dot{border-color:var(--fg-3)}
+.step-item[data-action]:hover .step-label{color:var(--fg-2)}
+.step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;font-family:var(--font-mono);border:1.5px solid var(--border-2);background:var(--bg);color:var(--fg-3);transition:all var(--dur) var(--ease);flex-shrink:0}
+.step-dot.active{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.step-dot.done{background:var(--accent);color:#fff;border-color:var(--accent);font-size:10px}
+.step-label{font-size:12px;color:var(--fg-3);font-weight:500;white-space:nowrap}
+.step-label.active{color:var(--fg)}
+.step-connector{width:40px;height:1px;background:var(--border-2);margin:0 8px}
+
+/* Main layout */
+.main-layout{display:flex;flex:1;overflow:hidden}
+.left-panel{width:300px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.left-panel-inner{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:20px}
+.main-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.sec-label{font-size:10px;font-weight:600;font-family:var(--font-mono);color:var(--fg-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+
+/* Intent input */
+.intent-textarea{width:100%;padding:10px 12px;border:1px solid var(--border-2);border-radius:var(--r-md);background:var(--bg);color:var(--fg);font-family:var(--font-sans);font-size:13px;line-height:1.5;resize:none;outline:none;transition:border-color var(--dur) var(--ease)}
+.intent-textarea:focus{border-color:var(--fg-3)}
+.intent-textarea::placeholder{color:var(--fg-4)}
+
+/* Example chips */
+.example-chip{width:100%;padding:7px 10px;border-radius:var(--r-sm);font-size:12px;color:var(--fg-2);cursor:pointer;transition:all var(--dur) var(--ease);text-align:left;background:transparent;border:1px solid transparent;display:flex;align-items:flex-start;gap:8px;font-family:var(--font-sans)}
+.example-chip:hover{background:var(--bg);border-color:var(--border);color:var(--fg)}
+.chip-id{font-family:var(--font-mono);font-size:10px;color:var(--accent);font-weight:500;flex-shrink:0;padding-top:1px}
+
+/* Scenario cards */
+.scenario-card{padding:10px 12px;border-radius:var(--r-md);background:var(--bg);border:1px solid var(--border);cursor:pointer;transition:all var(--dur) var(--ease)}
+.scenario-card:hover{border-color:var(--border-2);box-shadow:var(--shadow-card)}
+.scenario-card.active{background:var(--fg);border-color:var(--fg)}
+.scenario-card-top{display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap}
+.s-id{font-family:var(--font-mono);font-size:10px;font-weight:500;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:var(--r-pill)}
+.scenario-card.active .s-id{color:var(--accent);background:rgba(212,160,23,0.2)}
+.s-badge{font-size:10px;font-weight:500;padding:1px 7px;border-radius:var(--r-pill);border:1px solid;white-space:nowrap}
+.badge-happy{color:var(--status-good);border-color:#bbf7d0;background:#f0fdf4}
+.badge-error{color:var(--status-high);border-color:#fecaca;background:#fef2f2}
+.badge-edge{color:var(--status-warn);border-color:#fed7aa;background:#fff7ed}
+.badge-empty{color:var(--fg-3);border-color:var(--border-2);background:var(--surface)}
+.scenario-card.active .s-badge{background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.28);color:rgba(255,255,255,0.85)}
+.s-label{font-size:12px;font-weight:500;color:var(--fg);line-height:1.4}
+.scenario-card.active .s-label{color:#fff}
+.s-condition{font-size:11px;color:var(--fg-3);line-height:1.4;margin-top:3px}
+.scenario-card.active .s-condition{color:rgba(255,255,255,0.55)}
+
+/* Coverage signal */
+.coverage-signal{padding:10px 12px;border-radius:var(--r-md);font-size:12px;color:var(--accent-deep);background:var(--accent-soft);border:1px dashed rgba(212,160,23,0.4);line-height:1.5}
+.coverage-signal-actions{display:flex;gap:10px;margin-top:8px;align-items:center}
+
+/* Intent strip */
+.intent-strip{padding:9px 24px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.strip-label{font-size:10px;font-weight:600;font-family:var(--font-mono);color:var(--fg-3);text-transform:uppercase;letter-spacing:0.08em;flex-shrink:0}
+.strip-text{font-size:13px;color:var(--fg);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gov-pill{font-size:10px;color:var(--fg-3);background:var(--bg);border:1px solid var(--border);border-radius:var(--r-pill);padding:2px 9px;cursor:pointer;font-family:var(--font-mono);transition:all var(--dur) var(--ease);white-space:nowrap;flex-shrink:0}
+.gov-pill:hover{border-color:var(--border-2);color:var(--fg-2)}
+
+/* Empty state */
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:32px}
+.empty-copy{text-align:center;max-width:380px}
+.empty-eyebrow{font-size:10px;font-weight:600;font-family:var(--font-mono);color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
+.empty-heading{font-size:22px;font-weight:600;letter-spacing:-0.02em;color:var(--fg);margin-bottom:10px;line-height:1.3}
+.empty-sub{font-size:13px;color:var(--fg-2);line-height:1.65;margin-bottom:22px}
+.empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* Step 2 */
+.step2-wrap{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px;min-height:0}
+.step2-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.step2-heading{font-size:16px;font-weight:600;letter-spacing:-0.01em}
+.step2-sub{font-size:12px;color:var(--fg-3);margin-top:3px}
+.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Step 3 layout */
+.step3-layout{flex:1;display:flex;overflow:hidden}
+.step3-main{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.step3-sidebar{width:268px;flex-shrink:0;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow:hidden}
+.step3-sidebar-inner{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+
+/* Persona block */
+.persona-block{width:100%;max-width:720px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg)}
+.persona-header{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--border);user-select:none}
+.persona-header-label{font-size:12px;font-weight:600;color:var(--fg-3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.07em;flex-shrink:0}
+.chevron{font-size:9px;color:var(--fg-3);transition:transform var(--dur) var(--ease);line-height:1}
+.chevron.open{transform:rotate(180deg)}
+.persona-body{padding:14px;display:flex;flex-direction:column;gap:10px}
+.persona-fields-row{display:flex;gap:12px;align-items:flex-start}
+.persona-name-field{flex:0 0 190px}
+.persona-text-field{flex:1}
+.persona-field{display:flex;flex-direction:column;gap:5px}
+.persona-field-label{font-size:10px;font-weight:600;font-family:var(--font-mono);color:var(--fg-3);text-transform:uppercase;letter-spacing:0.08em}
+.persona-selector{display:flex;gap:6px}
+.persona-opt{flex:1;padding:7px;border-radius:var(--r-sm);font-size:12px;font-family:var(--font-sans);font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--fg-2);transition:all var(--dur) var(--ease);text-align:center}
+.persona-opt.active{border-color:var(--fg);background:var(--fg);color:var(--bg)}
+.persona-dropdown{border:1px solid var(--border-2);border-radius:var(--r-sm);padding:5px 10px;font-size:12px;font-family:var(--font-sans);font-weight:500;color:var(--fg);background:var(--bg);cursor:pointer;outline:none;transition:border-color var(--dur) var(--ease);flex-shrink:0}
+.persona-dropdown:focus{border-color:var(--fg-3)}
+.persona-text{font-size:11.5px;color:var(--fg-2);line-height:1.65;padding:10px 12px;background:var(--surface);border-radius:var(--r-sm);border:1px solid var(--border);font-family:var(--font-mono)}
+
+/* Phone */
+.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:720px}
+.phone-scenario-header{align-self:stretch;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 14px;display:flex;flex-direction:column;gap:4px}
+.phone-scenario-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ph-scenario-id{font-family:var(--font-mono);font-weight:600;font-size:12px;color:var(--accent)}
+.ph-scenario-title{font-size:13px;font-weight:600;color:var(--fg);letter-spacing:-0.01em}
+.ph-scenario-condition{font-size:11.5px;color:var(--fg-3);line-height:1.5}
+.phone-frame{width:300px;background:var(--ph-bg);border-radius:34px;border:7px solid #181818;box-shadow:0 0 0 1px #2a2a2a,0 20px 60px rgba(0,0,0,0.45);overflow:hidden}
+.phone-notch{height:26px;background:#0B0B0B;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--ph-border)}
+.phone-notch-pill{width:72px;height:9px;background:#1E1E1E;border-radius:999px}
+.phone-header{padding:9px 13px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--ph-border);background:var(--ph-surface)}
+.phone-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--ph-lime),#00a884);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#000;flex-shrink:0}
+.phone-bot-name{font-size:11px;font-weight:600;color:var(--ph-fg)}
+.phone-bot-status{font-size:9px;color:var(--ph-lime)}
+.phone-body{padding:10px 9px;height:552px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;background:var(--ph-bg)}
+
+/* Chat components */
+.chat-turn{display:flex;flex-direction:column;gap:4px}
+.chat-turn.bot{align-items:flex-start}
+.chat-turn.user{align-items:flex-end}
+.bubble-bot{background:var(--ph-surface);color:var(--ph-fg);padding:7px 11px;border-radius:4px 14px 14px 14px;font-size:11.5px;line-height:1.5;max-width:205px}
+.bubble-user{background:var(--ph-lime);color:var(--ph-user-text,#000);padding:7px 11px;border-radius:14px 14px 4px 14px;font-size:11.5px;font-weight:500;max-width:180px}
+.bubble-wrap{position:relative;display:inline-flex}
+.comp-wrap{position:relative;display:inline-flex;align-self:flex-start}
+.item-remove-btn{display:none;position:absolute;top:-5px;right:-5px;width:15px;height:15px;border-radius:50%;border:none;background:rgba(220,38,38,0.9);color:#fff;font-size:9px;font-weight:700;cursor:pointer;padding:0;z-index:10;align-items:center;justify-content:center;line-height:1}
+.bubble-wrap:hover .item-remove-btn,.comp-wrap:hover .item-remove-btn{display:flex}
+.bubble-editable{cursor:text;outline:none;white-space:pre-wrap;word-break:break-word}
+.bubble-editable:focus{outline:1.5px solid var(--ph-accent,#4ade80);outline-offset:2px;border-radius:3px}
+.comp-editable{cursor:text;outline:none;min-width:4px}
+.comp-editable:focus{background:rgba(0,0,0,0.06);border-radius:2px;outline:1px solid var(--ph-accent,#4ade80);outline-offset:1px}
+.quick-replies{display:flex;flex-wrap:wrap;gap:5px;padding:2px 0}
+.quick-reply{padding:4px 10px;border-radius:var(--r-pill);border:1px solid var(--ph-lime);color:var(--ph-lime);background:transparent;font-size:10.5px;font-family:var(--font-sans);white-space:nowrap;display:inline-block}
+.quick-reply.primary{background:var(--ph-lime);color:var(--ph-lime-text,#000);border-color:var(--ph-lime)}
+
+/* Metric card */
+.metric-card{background:var(--ph-surface-2);border:1px solid var(--ph-border);border-radius:11px;padding:11px;max-width:205px;display:flex;flex-direction:column;gap:6px}
+.metric-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.metric-label{font-size:10px;color:var(--ph-fg-2);font-family:var(--font-mono)}
+.metric-value{font-size:21px;font-weight:700;color:var(--ph-fg);font-family:var(--font-mono);margin-bottom:2px}
+.metric-meta{font-size:9.5px;color:var(--ph-fg-2)}
+.btn-lime{width:100%;background:var(--ph-lime);color:var(--ph-lime-text,#000);border:none;padding:8px;border-radius:7px;font-size:11px;font-weight:700;font-family:var(--font-sans)}
+
+/* Confirmation overlay */
+.conf-overlay{background:var(--ph-surface);border:1px solid var(--ph-border);border-radius:11px;padding:11px;max-width:205px}
+.conf-title{font-size:11px;font-weight:600;color:var(--ph-fg);margin-bottom:9px}
+.conf-row{display:flex;justify-content:space-between;padding:3.5px 0;border-bottom:1px solid var(--ph-border)}
+.conf-label{font-size:10.5px;color:var(--ph-fg-2)}.conf-value{font-size:10.5px;color:var(--ph-fg);font-weight:500}
+.conf-actions{display:flex;gap:7px;margin-top:9px}
+.btn-conf{flex:1;padding:7px 6px;border-radius:6px;font-size:10.5px;font-weight:700;font-family:var(--font-sans);border:none}
+.btn-conf.confirm{background:var(--ph-lime);color:var(--ph-lime-text,#fff)}
+.btn-conf.confirm.destructive{background:var(--ph-red);color:#fff}
+.btn-conf.cancel{background:transparent;color:var(--ph-fg-2);border:1px solid var(--ph-border)}
+
+/* Banners */
+.banner{max-width:205px;border-radius:8px;padding:8px 10px;font-size:11px;line-height:1.5;display:flex;align-items:flex-start;gap:6px}
+.banner-warning{background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.28);color:var(--ph-amber)}
+.banner-info{background:rgba(74,144,217,0.12);border:1px solid rgba(74,144,217,0.25);color:var(--ph-blue)}
+.banner-success{background:rgba(26,122,74,0.15);border:1px solid rgba(26,122,74,0.3);color:#4ade80}
+.banner-icon{font-size:12px;flex-shrink:0;line-height:1.5}
+
+/* Record card */
+.record-card{background:var(--ph-surface-2);border:1px solid var(--ph-border);border-radius:10px;padding:10px 11px;max-width:205px}
+.record-card-head{display:flex;justify-content:space-between;margin-bottom:7px}
+.record-id{font-size:9.5px;color:var(--ph-fg-2);font-family:var(--font-mono)}
+.record-status{font-size:9.5px;color:var(--ph-lime);font-weight:600}
+.record-primary{font-size:15px;font-weight:700;color:var(--ph-fg);margin-bottom:4px}
+.record-row{display:flex;justify-content:space-between;padding:3.5px 0;border-bottom:1px solid var(--ph-border)}
+.record-row:last-of-type{border-bottom:none}
+.record-label{font-size:10px;color:var(--ph-fg-2)}.record-value{font-size:10px;color:var(--ph-fg);font-weight:500}
+
+/* Disambiguation */
+.disambig{background:var(--ph-surface);border:1px solid var(--ph-border);border-radius:11px;padding:9px;max-width:205px;display:flex;flex-direction:column;gap:5px}
+.disambig-opt{display:flex;align-items:flex-start;gap:7px;padding:6px 8px;border-radius:7px;border:1px solid var(--ph-border);cursor:pointer}
+.disambig-key{font-size:10px;font-weight:700;color:var(--ph-lime);font-family:var(--font-mono);flex-shrink:0;padding-top:1px}
+.disambig-label{font-size:10.5px;color:var(--ph-fg);font-weight:500}
+.disambig-desc{font-size:9.5px;color:var(--ph-fg-2);margin-top:1px}
+
+/* Loading skeleton */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skeleton{background:linear-gradient(90deg,var(--ph-surface) 25%,var(--ph-surface-2) 50%,var(--ph-surface) 75%);background-size:400px 100%;animation:shimmer 1.6s ease infinite;border-radius:4px}
+.phone-loading{padding:20px 16px;display:flex;flex-direction:column;gap:10px}
+.phone-loading-line{height:10px}
+.phone-loading-line:nth-child(2){animation-delay:.15s}
+.phone-loading-line:nth-child(3){animation-delay:.3s}
+.phone-loading-line:nth-child(5){animation-delay:.1s}
+.phone-loading-line:nth-child(6){animation-delay:.25s}
+
+/* Error state in phone */
+.phone-error{padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;gap:8px;text-align:center}
+.phone-error-icon{font-size:20px}
+.phone-error-msg{font-size:11px;color:var(--ph-fg-2);line-height:1.5}
+.phone-error-retry{margin-top:4px;background:var(--ph-surface);border:1px solid var(--ph-border);color:var(--ph-fg);padding:6px 14px;border-radius:var(--r-pill);font-size:11px;cursor:pointer;font-family:var(--font-sans)}
+
+/* Generating scenarios state */
+.gen-loading{padding:32px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.gen-spinner{width:28px;height:28px;border:2px solid var(--border);border-top-color:var(--fg);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gen-label{font-size:13px;color:var(--fg-2)}.gen-sub{font-size:12px;color:var(--fg-3)}
+/* Cycling loading messages */
+.gen-label-cycle{position:relative;height:20px;min-width:260px}
+.gen-label-cycle .cycle-msg{position:absolute;left:0;right:0;font-size:13px;color:var(--fg-2);white-space:nowrap}
+.cycle-msg.msg-a{animation:cycle-a 5s ease-in-out infinite}
+.cycle-msg.msg-b{animation:cycle-b 5s ease-in-out infinite}
+@keyframes cycle-a{0%,35%{opacity:1}45%,90%{opacity:0}100%{opacity:1}}
+@keyframes cycle-b{0%,35%{opacity:0}45%,90%{opacity:1}100%{opacity:0}}
+
+/* Error banner */
+.error-banner{padding:12px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--r-md);font-size:12px;color:var(--status-high);line-height:1.5;display:flex;align-items:flex-start;gap:8px}
+
+/* Sidebar controls */
+.tweak-textarea{width:100%;padding:8px 10px;border:1px solid var(--border-2);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--font-sans);font-size:12px;line-height:1.5;resize:none;outline:none;transition:border-color var(--dur) var(--ease)}
+.tweak-textarea:focus{border-color:var(--fg-3)}
+.tweak-textarea::placeholder{color:var(--fg-4)}
+.tweak-toast{border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);padding:10px 12px;display:flex;flex-direction:column;gap:7px;box-shadow:var(--shadow-card)}
+.toast-label{font-size:10px;font-weight:600;font-family:var(--font-mono);color:var(--accent);text-transform:uppercase;letter-spacing:0.08em}
+.toast-rule{font-size:11.5px;color:var(--fg);line-height:1.5;font-style:italic}
+.toast-actions{display:flex;gap:6px}
+.btn-keep{background:var(--fg);color:var(--bg);border:none;padding:5px 13px;border-radius:var(--r-sm);font-size:11px;font-weight:600;font-family:var(--font-sans);cursor:pointer}
+.btn-discard{background:none;border:1px solid var(--border);color:var(--fg-2);padding:5px 13px;border-radius:var(--r-sm);font-size:11px;font-family:var(--font-sans);cursor:pointer}
+.learned-rule{padding:6px 8px;border-radius:var(--r-sm);background:var(--bg);border:1px solid var(--border);font-size:11px;color:var(--fg-2);line-height:1.4;display:flex;align-items:flex-start;gap:6px;margin-bottom:6px}
+.rule-dot{color:var(--accent);font-size:14px;line-height:1.1;flex-shrink:0}
+.rule-remove{color:var(--fg-4);background:none;border:none;cursor:pointer;font-size:13px;margin-left:auto;padding:0 2px;line-height:1;flex-shrink:0}
+.spec-preview{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-family:var(--font-mono);font-size:10px;color:var(--fg-2);line-height:1.75}
+.spec-key{color:var(--accent);font-weight:600;margin-bottom:2px}.spec-val{margin-bottom:10px}
+
+/* Materials overlay */
+.mat-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.28);z-index:350;display:flex;justify-content:flex-end}
+.mat-panel{width:400px;background:var(--bg);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;box-shadow:-8px 0 32px rgba(0,0,0,0.1)}
+.mat-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.mat-title{font-size:15px;font-weight:600;letter-spacing:-0.01em}
+.mat-close{background:none;border:none;font-size:20px;color:var(--fg-3);cursor:pointer;padding:2px 4px;line-height:1}
+.mat-close:hover{color:var(--fg)}
+.mat-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.mat-item{border:1px solid var(--border);border-radius:var(--r-md)}
+.mat-item-head{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
+.mat-item-name{font-size:13px;font-weight:500}.mat-item-status{font-size:10px;font-family:var(--font-mono)}
+.status-loaded{color:var(--status-good)}.status-missing{color:var(--fg-4)}.status-custom{color:var(--ph-blue)}
+.mat-item-body{padding:10px 14px;font-size:12px;color:var(--fg-2);line-height:1.55}
+.mat-actions{display:flex;gap:6px;padding:8px 14px;border-top:1px solid var(--border)}
+
+/* Onboarding */
+.onb-overlay{position:fixed;inset:0;background:rgba(250,250,248,0.92);z-index:300;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.onb-card{width:480px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-hover);padding:36px;display:flex;flex-direction:column;gap:22px}
+.onb-top{display:flex;flex-direction:column;gap:10px}
+.onb-top-row1{display:flex;align-items:flex-start;justify-content:space-between}
+.onb-brand{display:flex;align-items:center;gap:9px}
+.onb-brand-logo{width:26px;height:26px;border-radius:6px;background:var(--fg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.onb-brand-name{font-size:13px;font-weight:600;letter-spacing:-0.01em;color:var(--fg)}
+.onb-brand-tagline{font-size:11px;color:var(--fg-3);margin-top:1px}
+.onb-dots{display:flex;gap:6px}
+.onb-dot{height:6px;border-radius:var(--r-pill);background:var(--border-2);transition:all var(--dur) var(--ease);width:6px}
+.onb-dot.active{background:var(--fg);width:18px}.onb-dot.done{background:var(--accent)}
+.onb-skip{font-size:12px;color:var(--fg-3);background:none;border:none;cursor:pointer;font-family:var(--font-sans)}
+.onb-skip:hover{color:var(--fg-2)}
+/* Onboarding two-column layout */
+.onb-layout{display:flex;align-items:center;gap:48px;max-width:900px;width:100%;padding:0 24px}
+.onb-diagram{flex:0 0 260px;opacity:0.45;pointer-events:none;display:flex;justify-content:center}
+/* Undo/redo bar below phone */
+.phone-hist-bar{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px}
+.phone-hist-btn{background:none;border:1px solid var(--border-2);border-radius:var(--r-sm);width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:var(--fg-2);transition:all var(--dur) var(--ease);font-family:var(--font-sans)}
+.phone-hist-btn:hover:not(:disabled){background:var(--hover-tint);border-color:var(--border-2);color:var(--fg)}
+.phone-hist-btn:disabled{opacity:0.3;cursor:not-allowed}
+.phone-hist-label{font-size:11px;color:var(--fg-3);font-family:var(--font-mono);min-width:36px;text-align:center}
+.onb-eyebrow{font-size:10px;font-weight:600;font-family:var(--font-mono);color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+.onb-heading{font-size:20px;font-weight:600;letter-spacing:-0.02em;line-height:1.3;margin-bottom:8px}
+.onb-sub{font-size:13px;color:var(--fg-2);line-height:1.6}
+.onb-input{width:100%;padding:10px 13px;border:1px solid var(--border-2);border-radius:var(--r-md);background:var(--surface);color:var(--fg);font-family:var(--font-sans);font-size:13px;outline:none;transition:all var(--dur) var(--ease)}
+.onb-input:focus{border-color:var(--fg-3);background:var(--bg)}
+.onb-input::placeholder{color:var(--fg-4)}
+.onb-options{display:flex;flex-direction:column;gap:7px}
+.onb-option{padding:11px 14px;border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;transition:all var(--dur) var(--ease);background:var(--bg);display:flex;align-items:flex-start;gap:11px}
+.onb-option:hover{border-color:var(--border-2);background:var(--hover-tint)}
+.onb-option.selected{border-color:var(--fg);background:var(--fg)}
+.onb-radio{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--border-2);flex-shrink:0;margin-top:2px;transition:all var(--dur) var(--ease)}
+.onb-option.selected .onb-radio{background:var(--bg);border-color:var(--bg)}
+.onb-opt-label{font-size:13px;font-weight:500;color:var(--fg)}
+.onb-option.selected .onb-opt-label{color:var(--bg)}
+.onb-opt-desc{font-size:11px;color:var(--fg-3);margin-top:2px}
+.onb-option.selected .onb-opt-desc{color:rgba(250,250,248,0.65)}
+.onb-actions{display:flex;gap:8px;justify-content:flex-end}
+.btn-onb-back{background:none;border:1px solid var(--border);padding:9px 18px;border-radius:var(--r-sm);font-size:13px;font-family:var(--font-sans);color:var(--fg-2);cursor:pointer;transition:all var(--dur) var(--ease)}
+.btn-onb-back:hover{background:var(--hover-tint)}
+.btn-onb-next{background:var(--fg);color:var(--bg);border:none;padding:9px 22px;border-radius:var(--r-sm);font-size:13px;font-weight:500;font-family:var(--font-sans);cursor:pointer}
+.btn-onb-next:hover{background:#333}.btn-onb-next:disabled{opacity:.35;cursor:not-allowed}
+
+/* Step 1 intent picker */
+.intent-picker{flex:1;overflow-y:auto;padding:32px 24px;display:flex;flex-direction:column;gap:24px}
+.intent-picker-head{text-align:center;max-width:480px;align-self:center}
+.intent-picker-eyebrow{font-size:10px;font-weight:600;font-family:var(--font-mono);color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px}
+.intent-picker-heading{font-size:20px;font-weight:600;letter-spacing:-0.02em;margin-bottom:6px}
+.intent-picker-sub{font-size:13px;color:var(--fg-2);line-height:1.6}
+.intent-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:640px;align-self:center;width:100%}
+.intent-tile{padding:14px;border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;transition:all var(--dur) var(--ease);background:var(--bg);text-align:left;font-family:var(--font-sans);width:100%}
+.intent-tile:hover{border-color:var(--border-2);box-shadow:var(--shadow-card);transform:translateY(-1px)}
+.intent-tile:active{transform:translateY(0)}
+.intent-tile-id{font-family:var(--font-mono);font-size:10px;color:var(--accent);font-weight:500;margin-bottom:6px}
+.intent-tile-text{font-size:12px;color:var(--fg);line-height:1.45}
+.intent-divider{display:flex;align-items:center;gap:12px;color:var(--fg-4);font-size:11px;max-width:640px;align-self:center;width:100%}
+.intent-divider::before,.intent-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Step 2 scenario editor */
+.scenario-editor-list{display:flex;flex-direction:column;gap:8px}
+.scenario-editor-row{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;display:flex;flex-direction:column;gap:8px;transition:border-color var(--dur) var(--ease)}
+.scenario-editor-row:focus-within{border-color:var(--border-2);box-shadow:0 0 0 2px rgba(0,0,0,0.04)}
+.scenario-row-top{display:flex;align-items:center;gap:8px}
+.scenario-label-input{flex:1;border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 9px;font-family:var(--font-sans);font-size:13px;font-weight:500;color:var(--fg);background:var(--bg);outline:none;transition:border-color var(--dur) var(--ease)}
+.scenario-label-input:focus{border-color:var(--fg-3)}
+.scenario-cat-select{border:1px solid var(--border);border-radius:var(--r-pill);padding:3px 9px;font-size:11px;font-family:var(--font-sans);font-weight:500;color:var(--fg-2);background:var(--bg);cursor:pointer;outline:none;flex-shrink:0;transition:border-color var(--dur) var(--ease)}
+.scenario-cat-select.badge-happy{color:var(--status-good);border-color:#bbf7d0;background:#f0fdf4}
+.scenario-cat-select.badge-error{color:var(--status-high);border-color:#fecaca;background:#fef2f2}
+.scenario-cat-select.badge-edge{color:var(--status-warn);border-color:#fed7aa;background:#fff7ed}
+.scenario-cat-select.badge-empty{color:var(--fg-3);border-color:var(--border-2);background:var(--surface)}
+.scenario-cat-select:focus{border-color:var(--fg-3)}
+.scenario-condition-input{width:100%;border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 9px;font-family:var(--font-sans);font-size:12px;color:var(--fg-2);background:var(--surface);outline:none;resize:none;line-height:1.4;transition:border-color var(--dur) var(--ease)}
+.scenario-condition-input:focus{border-color:var(--fg-3)}
+.scenario-delete{background:none;border:none;color:var(--fg-4);cursor:pointer;font-size:18px;padding:2px 5px;line-height:1;flex-shrink:0;transition:color var(--dur) var(--ease)}
+.scenario-delete:hover{color:var(--status-high)}
+.add-scenario-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:1.5px dashed var(--border-2);border-radius:var(--r-md);font-size:12px;color:var(--fg-3);cursor:pointer;background:transparent;font-family:var(--font-sans);width:100%;transition:all var(--dur) var(--ease)}
+.add-scenario-btn:hover{border-color:var(--fg-3);color:var(--fg-2);background:var(--hover-tint)}
+
+/* Persona textarea */
+.persona-textarea{width:100%;font-size:11.5px;color:var(--fg-2);line-height:1.65;padding:10px 12px;background:var(--surface);border-radius:var(--r-sm);border:1px solid var(--border-2);font-family:var(--font-mono);resize:vertical;outline:none;min-height:80px;transition:border-color var(--dur) var(--ease)}
+.persona-textarea:focus{border-color:var(--fg-3)}
+.btn-persona-save{background:var(--fg);color:var(--bg);border:none;padding:8px 14px;border-radius:var(--r-sm);font-size:12px;font-weight:500;font-family:var(--font-sans);cursor:pointer;width:100%;transition:background var(--dur) var(--ease)}
+.btn-persona-save:hover{background:#333}
+.persona-save-feedback{text-align:center;font-size:11px;color:var(--status-good);padding:3px 0}
+
+/* Scenario status indicators */
+.s-gen-spinner{width:9px;height:9px;border:1.5px solid var(--border-2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;margin-left:auto}
+@keyframes pulse-dot{0%,100%{opacity:.35}50%{opacity:.9}}
+.s-pending-dot{width:7px;height:7px;border-radius:50%;background:var(--border-2);flex-shrink:0;margin-left:auto;animation:pulse-dot 1.4s ease infinite}
+.s-gen-done{font-size:9px;font-weight:700;color:var(--status-good);margin-left:auto;flex-shrink:0;line-height:1}
+.scenario-card.active .s-pending-dot{background:rgba(255,255,255,0.35)}
+.scenario-card.active .s-gen-done{color:rgba(255,255,255,0.6)}
+.scenario-card.active .s-gen-spinner{border-color:rgba(255,255,255,0.25);border-top-color:var(--accent)}
+
+/* Materials replace form */
+.mat-replace-form{padding:10px 14px 12px;background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:7px;border-radius:0 0 var(--r-md) var(--r-md)}
+.mat-opt-btn{padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-size:12px;color:var(--fg-2);background:var(--bg);text-align:left;font-family:var(--font-sans);width:100%;transition:all var(--dur) var(--ease);line-height:1.3}
+.mat-opt-btn:hover{border-color:var(--border-2);color:var(--fg)}
+.mat-opt-btn.mat-opt-selected{border-color:var(--fg);color:var(--fg);background:var(--hover-tint)}
+.mat-opt-btn.mat-opt-remove{color:var(--status-high);border-color:#fecaca;background:none}
+.mat-opt-btn.mat-opt-remove:hover{background:#fef2f2}
+.mat-replace-input{width:100%;padding:7px 10px;border:1px solid var(--border-2);border-radius:var(--r-sm);font-size:12px;font-family:var(--font-sans);color:var(--fg);background:var(--bg);outline:none;transition:border-color var(--dur) var(--ease)}
+.mat-replace-input:focus{border-color:var(--fg-3)}
+.mat-replace-input::placeholder{color:var(--fg-4)}
+.mat-replace-textarea{width:100%;padding:7px 10px;border:1px solid var(--border-2);border-radius:var(--r-sm);font-size:12px;font-family:var(--font-sans);color:var(--fg);background:var(--bg);outline:none;resize:none;height:90px;line-height:1.5;transition:border-color var(--dur) var(--ease)}
+.mat-replace-textarea:focus{border-color:var(--fg-3)}
+.mat-replace-textarea::placeholder{color:var(--fg-4)}
+.btn-mat-done{background:var(--fg);color:var(--bg);border:none;padding:6px 14px;border-radius:var(--r-sm);font-size:11px;font-weight:500;font-family:var(--font-sans);cursor:pointer}
+.btn-mat-done:hover{background:#333}
+
+/* Export panel */
+@keyframes fade-in-overlay{from{opacity:0}to{opacity:1}}
+@keyframes slide-in-right{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.export-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.28);z-index:200;display:flex;align-items:flex-end;justify-content:flex-end;animation:fade-in-overlay 0.18s ease}
+.export-panel{width:320px;height:100%;background:var(--bg);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;box-shadow:-8px 0 32px rgba(0,0,0,0.1);animation:slide-in-right 0.2s cubic-bezier(0.25,0,0.1,1)}
+.export-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.export-title{font-size:15px;font-weight:600;letter-spacing:-0.01em}
+.export-close{background:none;border:none;font-size:20px;color:var(--fg-3);cursor:pointer;padding:2px 4px;line-height:1}
+.export-close:hover{color:var(--fg)}
+.export-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px}
+.export-check-list{display:flex;flex-direction:column;gap:2px}
+.export-check-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm);cursor:pointer;transition:background var(--dur) var(--ease)}
+.export-check-row:hover{background:var(--hover-tint)}
+.export-checkbox{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border-2);background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all var(--dur) var(--ease)}
+.export-checkbox.checked{background:var(--fg);border-color:var(--fg)}
+.export-checkbox.checked::after{content:'✓';font-size:10px;color:var(--bg);font-weight:700;line-height:1}
+.export-check-label{font-size:13px;font-weight:500;color:var(--fg)}
+.export-check-desc{font-size:11px;color:var(--fg-3);line-height:1.4;margin-top:1px}
+.export-scope-toggle{display:flex;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;margin-top:2px}
+.export-scope-btn{flex:1;padding:7px 10px;font-size:12px;font-weight:500;background:var(--bg);border:none;cursor:pointer;font-family:var(--font-sans);color:var(--fg-3);transition:all var(--dur) var(--ease);text-align:center}
+.export-scope-btn.active{background:var(--fg);color:var(--bg);font-weight:600}
+.btn-export-go{width:100%;background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:600;font-family:var(--font-sans);cursor:pointer;transition:opacity var(--dur) var(--ease)}
+.btn-export-go:hover{opacity:0.88}
+.btn-export-go:disabled{opacity:0.4;cursor:not-allowed}
+
+/* Persist indicator in topbar */
+.persist-dot{width:6px;height:6px;border-radius:50%;background:var(--status-good);flex-shrink:0}
+
+/* KB material cards */
+.mat-card{border:1px solid var(--border);border-radius:var(--r-md);background:var(--bg);transition:border-color var(--dur) var(--ease)}
+.mat-card:hover{border-color:var(--border-2)}
+.mat-card-list{display:flex;flex-direction:column;gap:8px}
+.mat-card-body{padding:11px 14px 10px}
+.mat-card-name-line{display:flex;align-items:center;gap:7px;min-width:0}
+.mat-card-name{font-size:13px;font-weight:500;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.mat-card-excerpt{font-size:11.5px;color:var(--fg-3);line-height:1.5;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mat-badge{font-size:9.5px;font-weight:600;font-family:var(--font-mono);padding:2px 7px;border-radius:var(--r-pill);border:1px solid;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0}
+.badge-ready{color:var(--status-good);border-color:#bbf7d0;background:#f0fdf4}
+.badge-parsing{color:var(--status-warn);border-color:#fed7aa;background:#fff7ed}
+.badge-custom{color:var(--ph-blue);border-color:rgba(74,144,217,0.3);background:rgba(74,144,217,0.08)}
+.mat-card-actions{display:flex;gap:3px;align-items:center;padding:6px 10px;border-top:1px solid var(--border)}
+.mat-card-btn{background:none;border:none;font-size:11px;font-family:var(--font-sans);color:var(--fg-3);cursor:pointer;padding:3px 8px;border-radius:var(--r-sm);transition:all var(--dur) var(--ease)}
+.mat-card-btn:hover{background:var(--hover-tint);color:var(--fg)}
+.mat-card-btn.danger{color:#ef4444}
+.mat-card-btn.danger:hover{background:#fef2f2;color:var(--status-high)}
+.mat-card-btn.active{color:var(--fg);background:var(--hover-tint)}
+/* Not applied cards */
+.mat-card-na{border-style:dashed}
+.mat-card-na .mat-card-name{color:var(--fg-2)}
+.mat-card-na .mat-card-actions{justify-content:flex-start}
+.btn-apply-mat{font-size:11px;font-weight:600;font-family:var(--font-sans);padding:4px 12px;border-radius:var(--r-sm);border:1px solid var(--accent);color:var(--accent);background:transparent;cursor:pointer;transition:all var(--dur) var(--ease)}
+.btn-apply-mat:hover{background:var(--accent);color:#fff}
+.mat-preview-block{margin:0 14px 12px;font-size:10.5px;color:var(--fg-3);font-family:var(--font-mono);line-height:1.6;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow-y:auto}
+
+/* Sidebar footer zone */
+.sidebar-footer{border-top:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface);flex-shrink:0}
+.sidebar-footer-row{display:flex;gap:6px}
+.btn-footer-primary{flex:1;background:var(--fg);color:var(--bg);border:none;padding:7px 10px;border-radius:var(--r-sm);font-size:11.5px;font-weight:500;font-family:var(--font-sans);cursor:pointer;transition:background var(--dur) var(--ease);white-space:nowrap}
+.btn-footer-primary:hover{background:#333}
+.btn-footer-outline{flex:1;background:none;border:1px solid var(--border-2);padding:7px 10px;border-radius:var(--r-sm);font-size:11.5px;font-weight:500;font-family:var(--font-sans);color:var(--fg-2);cursor:pointer;transition:all var(--dur) var(--ease);text-align:center;display:block;white-space:nowrap}
+.btn-footer-outline:hover{border-color:var(--fg-3);color:var(--fg);background:var(--hover-tint)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const S = {
+  step: 'onboarding',
+  onbStep: 0,
+  onbDomain: 'Crypto / Fintech',
+  onbGuidelines: 'preloaded',
+  onbGuidelinesPaste: '',
+  onbExtras: [],             // additional materials uploaded in step 3 [{name, content}]
+  onbDesign: 'm3',
+  onbDesignUrl: '',
+  onbDesignPaste: '',
+  onbScenarios: 'preloaded',
+  convoHistory: {},
+  convoHistoryIdx: {},
+  materials: [],
+  showAddMaterial: false,
+  intent: '',
+  submittedIntent: '',
+  scenarios: [],
+  selectedScenario: null,
+  persona: 'trading',
+  personaOpen: false,
+  generatedConvos: {},
+  generatingKeys: new Set(),
+  awaitingRegenKeys: new Set(),
+  domainInitialized: null,
+  generatingScenarios: false,
+  scenarioError: null,
+  convError: null,
+  learnedRules: [],
+  scenarioRules: {},     // { [scenarioId]: [rules] } — rules scoped to one scenario
+  pendingRule: null,
+  capturedRule: null,
+  tweak: '',
+  showMaterials: false,
+  pendingOnbDesign: null,  // DS key staged in add-back-mat, applied only on Apply+Regen
+  replacingMat: null,
+  previewMatId: null,
+  coverageDismissed: false,
+  copyDone: false,
+  showCopyChooser: false,
+  personaTexts: null,        // initialized below after PERSONAS
+  personaNames: null,        // initialized below after PERSONAS
+  personaSaveToast: false,
+  personaDirty: false,      // true when persona has changed but Save & regenerate hasn't been clicked
+  showExportPanel: false,
+  exportFormat: 'html',           // 'html' | 'jsonl'
+  exportScope: 'selected',        // 'selected' | 'all'
+  exportSections: { conversation: true, spec: true, map: false, rules: false },
+  savingSession: false,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════
+const EXAMPLE_INTENTS = [
+  {id:'E1', text:'User wants to cancel a P2P order'},
+  {id:'E2', text:"User asks why their deposit hasn't arrived"},
+  {id:'E3', text:'User wants to lock in a preferential rate'},
+  {id:'E4', text:"Account restricted, user doesn't know why"},
+  {id:'E5', text:'User wants the best rate to buy USDT'},
+  {id:'E6', text:'User asks about their trading fee tier'},
+];
+
+const PERSONAS = {
+  trading: {
+    name:'Trading Bot', tag:'Trading',
+    text:'You are a precise, efficient trading assistant. Lead with the key number or rate. Keep responses under 3 sentences unless the user asks for more detail. Flag risk clearly and briefly. Avoid emotional language. Prioritise accuracy over reassurance.',
+  },
+  support: {
+    name:'Support Bot', tag:'Support',
+    text:"You are a warm, patient support assistant. Acknowledge the user's situation before solving it. Confirm understanding before acting. Always offer a human escalation path if the issue is not resolved within 2 turns. Never speculate on timelines or account decisions without verified data.",
+  },
+};
+
+// Init editable persona texts from PERSONAS defaults
+S.personaTexts = { trading: PERSONAS.trading.text, support: PERSONAS.support.text };
+S.personaNames = { trading: PERSONAS.trading.name, support: PERSONAS.support.name };
+
+// Domain-specific content — populated after onboarding
+S.domainIntents  = null;   // null = not yet generated
+S.domainPersonas = null;   // null = not yet generated
+S.domainLoading  = false;
+S.domainCallFor  = null;   // staleness token — tracks which domain the in-flight intent generation is for
+
+// ═══════════════════════════════════════════════════════════════
+// EMBEDDED TRAINING MATERIALS (used in prompts)
+
+// ═══════════════════════════════════════════════════════════════
+// PRE-DISTILLED MATERIAL SUMMARIES
+// These skip the parseMaterial() Claude call for bundled defaults.
+// Checked by string identity against the fallback constants above.
+// ═══════════════════════════════════════════════════════════════
+const PREDISTILLED = {
+  unified_scenario: `Blocker resolution: resolve blockers before surfacing primary CTA — authentication → verification → account state → rate/availability → confirmation. Never show an action a user can't complete.
+Confirmation: explicit (ask before executing) for irreversible/high-stakes (transfers, cancellations, data deletion); implicit (echo in next response) for low-stakes.
+Error recovery: Clarification (one targeted question), Disambiguation (specific options), Graceful escalation (full context, never restart), Acknowledgement before redirect ("I can't do X but I can help with Y").
+Escalation: offer at turn 3 in support flows; immediate for fraud/suspension.
+Pending states: close with reference point and confirm whether action needed.
+After 3 failed attempts at same input: offer a different path.`,
+
+  unified_conv: `TURN RULES: One thing per turn. Quick replies max 4. Rich components must pair with a bot bubble (before or after). Never render a component in isolation.
+CTA LABELS: Verb + object always. "Cancel order", "View details". Never "Confirm", "OK", "Yes", "Proceed", "Submit".
+PROMPT WRITING: Make expected answer obvious. Offer specific options, not open questions.
+ERROR MESSAGES: (1) Never blame user. (2) Name what happened to user, not system — no error codes. (3) Exactly one next step, not a list. (4) Lead with fix, not apology. (5) Match severity. (6) After 3 failed attempts, offer different path.
+TONE: Urgency→direct/brief. Frustration→acknowledge first. High-stakes→precise, add friction (don't rush), no contractions on key details. Error→calm/factual/never defensive.
+VOICE: Plain language. Active voice. Short sentences. Respond to implied intent, not literal words. No ALL CAPS. No em dashes (use comma or colon). Sentence case.
+AVOID: Wall of text, double questions per turn, hollow affirmations ("Great!"), passive confirmations, assumed success, premature closing, jargon code-switching.`,
+
+  m3_conv: `M3 COMPONENT MAPPING:
+Bot bubble → Secondary Container bg, ExtraLarge corners (trailing-bottom Small), Body Large typography.
+User bubble → Primary Container bg, ExtraLarge corners (leading-bottom Small), right-aligned.
+Quick replies → Suggestion Chip (not Filter/Input/Assist). Max 4. Disappear on selection.
+Disambiguation → List Item (three-line) for 3+ meaningfully different paths.
+Banners: Warning=persistent pre-emptive. Info=persistent neutral. Success=Snackbar transient 4s (only after confirmed). Error=persistent reactive. Always pair with bot bubble.
+Confirmation → AlertDialog. Title=action verb. Error colour on confirm for destructive. Only after clear user intent.
+Cards → Elevated/Tonal. 3+ structured data points. One per turn. Always preceded by bot bubble. Real data only.
+Action-state gating: resolve blockers first. Never show success until server-confirmed.
+Tokens: Secondary Container (bot), Primary Container (user), Surface Variant (input), Error, Tertiary (success).`,
+
+  antx_conv: `ANT DESIGN X COMPONENT MAPPING:
+Bubble: role='user'|'assistant'. loading=true while awaiting first token. typing={step:2,interval:50} during streaming.
+Bubble.List: autoScroll=true (disengages on scroll up). Define roles for default props.
+Prompts: chip mode=2-5 self-evident shortcuts (disappear on selection). Card mode (vertical=true)=3+ paths needing context. Never mix modes in same turn.
+Sender: loading swaps send for cancel. Enter=submit, Shift+Enter=newline.
+ThoughtChain: collapsible, collapsed after completion. Title=human-readable verb phrase.
+Alerts: warning=pre-emptive, info=neutral, success=after confirmed only, error=reactive. Always pair with Bubble above.
+Confirmation → Modal.confirm(). danger prop for destructive. Only after clear user intent.
+Action-state gating: resolve blockers first. Never show success until confirmed.
+Layout: Welcome/Bubble.List → ThoughtChain → Bubble.List+Actions → Prompts → Sender.`,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// MATERIAL FETCH
+// ═══════════════════════════════════════════════════════════════
+async function fetchMaterialFile(path, fallback) {
+  try {
+    const res = await fetch(path);
+    if (res.ok) return await res.text();
+    return fallback;
+  } catch(e) { return fallback; }
+}
+
+// ── Phone simulator component schemas — always injected into generation prompts ──
+// These are rendering constraints, not design-system choices.
+// They tell Claude what JSON types the phone simulator can render.
+// Universal components — used for all domains
+const PHONE_SIM_SCHEMA_UNIVERSAL = `AVAILABLE PHONE COMPONENTS (return as JSON — these are the only renderable types):
+1. confirmationOverlay: {type:"confirmationOverlay", title:"Confirm action", rows:[{label:"Field",value:"..."},{label:"Field",value:"..."}], confirmCta:"Confirm", cancelCta:"Go back", destructive:false}
+   — Set destructive:true for cancel/delete/irreversible actions (CTA renders red).
+2. warningBanner: {type:"warningBanner", message:"Describe a non-blocking caution or policy note here."}
+3. infoBanner: {type:"infoBanner", message:"Describe a helpful contextual note here."}
+4. successBanner: {type:"successBanner", message:"Describe the completed action here."}
+5. disambiguation: {type:"disambiguation", options:[{key:"A",label:"Option A",desc:"Brief description"},{key:"B",label:"Option B",desc:"Brief description"},{key:"C",label:"Option C",desc:"Brief description"}]}
+6. metricCard: {type:"metricCard", label:"Metric name", value:"Key value", meta:"Supporting detail (optional)", cta:"Action label (optional)"}
+   — Use when the bot needs to surface a single key measurement, stat, or figure with an optional action.
+7. recordCard: {type:"recordCard", id:"REF-001", status:"Active", primaryValue:"Main value (optional)", rows:[{label:"Field",value:"..."},{label:"Field",value:"..."}]}
+   — Use for a specific record or entity with structured key-value data (order, booking, account, transaction, etc.).
+
+COMPONENT USAGE RULES:
+- confirmationOverlay: immediately before an irreversible action the user has decided to take. Not at discovery stage.
+- warningBanner: non-blocking caution or policy note. Always paired with a bot bubble.
+- successBanner: only after an action is confirmed complete. Never before.
+- disambiguation: for 3+ distinct paths with meaningfully different outcomes.
+- metricCard: when a single key figure needs emphasis with optional context and CTA. One per turn.
+- recordCard: for a specific record with 2+ structured fields. Always preceded by a bot bubble. Populate all fields with real data.`;
+
+// Compact fallbacks used when .md files can't be fetched (single-file context)
+const GENERIC_GUIDELINES_FALLBACK = `
+UNIFIED CONVERSATION DESIGN PRINCIPLES
+
+GRICE'S COOPERATIVE MAXIMS (Grice, 1975):
+1. Quality — Only say what you know to be true. Signal uncertainty explicitly ("Based on what I can see…"). Never fabricate.
+2. Quantity — Lead with the answer. No more, no less than needed. Break long responses into separate turns.
+3. Relevance — Every response must advance the user's current goal. Filter to what matters now.
+4. Manner — One idea per message. Plain language. Active voice. Short sentences.
+
+CORE PRINCIPLES (adapted from Google Conversation Design · CC BY 4.0):
+- Move forward: every bot turn should advance the user's goal. Never end on a failure — offer the next best path.
+- Context is memory: use what's been established; acknowledge if context is lost.
+- Respond to what the user means, not what they literally said.
+- One question per turn. Max 4 quick replies.
+- CTA format: verb + object. "Send money", "Cancel order". Never "OK", "Yes", "Confirm".
+- Explicit confirmation for irreversible/high-stakes actions. Implicit confirmation for low-stakes inputs.
+- Persona must be consistent across happy paths and error states.
+
+ERROR HANDLING AND ESCALATION:
+- Never blame the user. "I didn't catch that" not "You said it wrong."
+- Name what happened to the user, not the system. One next step — not a list.
+- After 3 failed attempts, offer a different path or escalate.
+- Escalation: offer at turn 3 if unresolved. Transfer with full context. User should never repeat themselves.
+- Acknowledge intent before redirecting. "I can't do X, but I can help you with Y."
+
+TONE CALIBRATION:
+- Urgency → more direct, fewer words
+- Frustration → acknowledge before explaining
+- High-stakes action → precise, no contractions on key details
+- Error → calm, factual, no blame
+
+AVOID:
+- Wall of text (break into chunks)
+- Hollow affirmations ("Great!", "Absolutely!")
+- Passive voice in confirmations
+- Jargon-switching ("initiate fund transfer" when user said "send money")
+`;
+
+const DESIGN_M3_FALLBACK = `
+DESIGN SYSTEM: MATERIAL DESIGN 3 (Material You)
+Source: material.io — Google's cross-platform mobile component system.
+
+COMPONENT MAPPING FOR CHATBOT UI:
+
+Bot message bubble: Surface / tonal Card. Background: Secondary Container. Corner: ExtraLarge (28dp), trailing-bottom: Small (4dp). Typography: Body Large.
+User message bubble: Primary Container background. Corner: ExtraLarge (28dp), leading-bottom: Small (4dp). Right-aligned.
+Timestamp/sender: Label Small, On Surface Variant colour.
+
+Quick replies → Suggestion Chip. Height 32–40dp. Outlined or tonal. Disappear after selection. Max 4 visible. Use for binary choices and common action shortcuts. Never mix with disambiguation in the same turn.
+
+Typing indicator → CircularProgressIndicator (indeterminate, 20dp) or custom three-dot animation. Show when latency > 600ms.
+
+Disambiguation → List Item (three-line). Use when 3+ paths have meaningfully different outcomes and the user needs to understand each before choosing. Use Suggestion Chips instead for lightweight shortcuts where options are self-evident.
+
+Banners (semantic intent mapping):
+- Warning → Banner (persistent): pre-emptive caution before an action the user hasn't taken yet.
+- Info → Banner (persistent): neutral system state the user should be aware of.
+- Success → Snackbar (transient, auto-dismiss 4s): only after an action is confirmed. Never before.
+- Error → Banner (persistent): reactive failure — action did not complete, user must act.
+Always pair a banner with a bot bubble. Never render a banner as the sole response.
+
+Input field → Filled TextField. Background: Surface Variant. Trailing: Icon Button (send, Primary tint). Grows to 4 lines, then scrolls.
+
+Confirmation → AlertDialog. Title: action verb. Body: 1-3 lines. Buttons: Cancel (left) + action verb (right). Filled Button for highest-stakes. For irreversible/destructive actions, use error colour on the confirm button. Only trigger after user has expressed clear intent — never at discovery stage.
+
+Cards → Elevated Card or Tonal Card. Use when a response contains 3+ structured data points that belong together. Anatomy: header (subject name), key-value rows (2-5 fields), optional status badge (use tertiary/error tokens), optional single action button. One card per turn. Always preceded by a bot bubble. Every field must be populated with real data. Don't repeat card content in the bubble.
+
+ACTION-STATE GATING: Resolve blockers before surfacing components. Don't show a confirmation dialog until inputs are validated. Don't show success until action is server-confirmed. Don't show a primary CTA if a prerequisite is unresolved — show a warning Banner and corrective action first.
+
+KEY TOKENS: Secondary Container (bot bubble), Primary Container (user bubble), Surface Variant (input bg), Error (error states), Tertiary (success/confirmations), On Surface Variant (secondary text).
+
+GOTCHAS: No native chat bubble component (custom required). Dynamic Color may create contrast issues — verify ratios. Use Suggestion Chip specifically (not Filter/Input/Assist Chip).
+`;
+
+const DESIGN_ANTX_FALLBACK = `
+DESIGN SYSTEM: ANT DESIGN X
+Source: x.ant.design — AI-native chat component library by Ant Group. Purpose-built for conversational AI.
+
+CORE COMPONENTS:
+
+Bubble — single message unit.
+Props: content (text/ReactNode), role ('user'|'assistant'), placement ('start'|'end'), loading (typing indicator), typing ({step:2,interval:50} for streaming animation), variant ('filled'|'borderless'|'outlined'|'shadow'), footer (actions slot), header (sender/timestamp slot).
+Use loading=true while waiting for first token. Switch to typing once stream begins.
+
+Bubble.List — conversation thread.
+Props: items (array of {key, role, content}), autoScroll (default true), roles (define default props per role — avatar, variant, placement — to keep items array clean).
+autoScroll disengages when user scrolls up, re-engages at bottom.
+
+Prompts — suggested actions / quick replies.
+Props: items ([{key, label, description, icon, disabled}]), title, onItemClick, wrap (chips), vertical (card layout).
+Chip mode: lightweight follow-up shortcuts after a bot message (2-5 options). Disappear after selection. Use when options are self-evident.
+Card mode (vertical=true): use when 3+ paths have meaningfully different outcomes and the user needs to understand each before choosing. Also used for onboarding empty state.
+Never mix chips and card-mode disambiguation in the same turn.
+
+Welcome — pre-conversation empty state.
+Props: icon, title, description, prompts (accepts Prompts component directly).
+Replace with Bubble.List on first message. Title = one short question. Description = expectations, not feature list.
+
+ThoughtChain — agent reasoning visibility.
+Props: items ([{key, title, description, status ('pending'|'success'|'error'), icon, extra}]), collapsible.
+Show above the final response. Default to collapsed after completion. title must be human-readable verb phrase ("Checking your recent transfers" not "FUNCTION_CALL: get_transactions").
+
+Sender — chat input.
+Props: value, onChange, onSubmit, onCancel (stops streaming), loading (shows cancel instead of send), placeholder, allowSpeech, actions (attachment/emoji slot), header (attachment preview slot).
+loading prop swaps send icon for stop/cancel automatically. Enter=submit, Shift+Enter=newline.
+
+BubbleActions — message-level controls (copy, thumbs up/down, regenerate).
+Render in Bubble footer slot. Show on hover/tap. Standard set: copy, helpful, not helpful, regenerate (last message only).
+
+SYSTEM NOTICES (use Ant Design Alert inline in message stream):
+- Warning (type="warning"): pre-emptive caution before an action the user hasn't taken yet.
+- Info (type="info"): neutral system state to be aware of.
+- Success (type="success"): only after an action is confirmed. Never before. For lightweight success, prefer message.success() toast.
+- Error (type="error"): reactive failure — action did not complete, user must act.
+Always pair an Alert with a Bubble above it. Never render Alert as the sole response turn.
+
+CONFIRMATION (use Modal.confirm() or custom Modal):
+Title = action verb. Body = 1-3 lines of specifics. Buttons: cancel (left, neutral) + confirm (right, primary). For irreversible/destructive actions, use danger prop on confirm button (renders red). Only trigger after user has expressed clear intent — never at discovery stage.
+
+CARDS (use Ant Design Card component inline in message stream, or custom Bubble content renderer):
+Use when response contains 3+ structured data points that belong together. Anatomy: header (subject), key-value rows (2-5 fields), optional status Tag (success/error/warning/processing presets), optional single Button. One card per turn. Always preceded by a Bubble. Every field must be real data — no blanks. Don't repeat card content in the bubble.
+
+ACTION-STATE GATING: Resolve blockers before surfacing components. Don't show Modal.confirm() until inputs are validated. Don't show success until action is confirmed. Don't show a primary CTA if a prerequisite is unresolved — show a warning Alert and corrective action first.
+
+FULL CHAT LAYOUT:
+Welcome/Bubble.List → ThoughtChain (when agent active) → Bubble.List (messages + Actions) → Prompts (follow-ups) → Sender (with Attachments in header)
+
+CHOOSE Ant Design X when: AI-first product, streaming responses, agent steps are core UX, React + Ant Design ecosystem.
+CHOOSE Material Design 3 when: Android/cross-platform app, chat is secondary feature, team already on M3.
+`;
+
+// ═══════════════════════════════════════════════════════════════
+// CLAUDE INTEGRATION
+// ═══════════════════════════════════════════════════════════════
+
+// Normalize whatever window.cowork.askClaude returns into a plain string
+function extractText(response) {
+  if (typeof response === 'string') return response;
+  if (!response) return '';
+  // Anthropic-style: { content: [{type:'text', text:'...'}] }
+  if (Array.isArray(response.content)) {
+    return response.content.map(c => (typeof c === 'string' ? c : c.text || '')).join('');
+  }
+  // Simple object with a text or content string field
+  if (typeof response.text === 'string') return response.text;
+  if (typeof response.content === 'string') return response.content;
+  if (typeof response.message === 'string') return response.message;
+  // Last resort
+  return JSON.stringify(response);
+}
+
+function parseJSON(raw) {
+  const text = extractText(raw);
+  try {
+    let t = text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    const m = t.match(/[\[{][\s\S]*[\]}]/);
+    if (m) t = m[0];
+    return JSON.parse(t);
+  } catch(e) {
+    console.error('JSON parse failed:', text.slice(0, 300));
+    throw new Error('Could not parse Claude\'s response as JSON. Try generating again.');
+  }
+}
+
+async function generateScenarios(intent) {
+  if (S.generatingScenarios) return;   // guard against duplicate calls
+  S.generatingScenarios = true;
+  S.scenarioError = null;
+  S.scenarios = [];
+  render();
+
+  // Use parsed scenarioContext per active material; fall back to full content if not yet parsed
+  const materialScenarioContext = S.materials
+    .filter(m => !m.removed)
+    .map(m => m.parsed ? m.scenarioContext : m.content)
+    .filter(Boolean)
+    .join('\n\n');
+  const scenariosRefBlock = materialScenarioContext;
+  const prompt = `You are an expert conversation designer. Expand this chatbot user intent into scenario branches.
+
+Domain: ${S.onbDomain}
+User Intent: "${intent}"
+${scenariosRefBlock ? '\nKNOWLEDGE BASE — SCENARIO REFERENCE (use to inform branch types, conditions, and coverage):\n' + scenariosRefBlock : ''}
+Generate 5–9 scenarios covering all paths. Include: 1+ happy path, 2+ error states, 2+ edge cases, 1 empty state.
+
+IMPORTANT: Return ONLY a valid JSON array. No markdown, no explanation. Each object must have exactly:
+{
+  "id": "S1",
+  "label": "Short outcome label (3–6 words)",
+  "category": "Happy path" OR "Error state" OR "Edge case" OR "Empty state",
+  "condition": "IF [brief system/user state description]"
+}`;
+
+  try {
+    const response = await window.cowork.askClaude(prompt);
+    const scenarios = parseJSON(response);
+    S.scenarios = scenarios;
+    S.submittedIntent = intent;
+    S.selectedScenario = null;
+    S.coverageDismissed = false;
+    // Clear all cached conversations — new scenarios have new conditions,
+    // old conversations keyed by the same IDs (S1, S2…) must not bleed through.
+    S.generatedConvos = {};
+    S.convoHistory = {};
+    S.convoHistoryIdx = {};
+    S.step = 2;
+  } catch(e) {
+    S.scenarioError = e.message || 'Generation failed. Please try again.';
+  } finally {
+    S.generatingScenarios = false;
+    render();
+  }
+}
+
+// Deep-clone a convo turns array so history entries are truly independent
+function cloneConvo(turns) { return JSON.parse(JSON.stringify(turns)); }
+
+// Push current generatedConvos[key] to history as a deep clone
+function pushConvoHistory(key) {
+  if (!S.convoHistory[key]) S.convoHistory[key] = [];
+  const curIdx = S.convoHistoryIdx[key] ?? S.convoHistory[key].length - 1;
+  S.convoHistory[key] = S.convoHistory[key].slice(0, curIdx + 1);
+  S.convoHistory[key].push(cloneConvo(S.generatedConvos[key]));
+  S.convoHistoryIdx[key] = S.convoHistory[key].length - 1;
+}
+
+async function generateConversation(scenario, persona) {
+  const key = scenario.id + '-' + persona;
+  if (S.generatedConvos[key] || S.generatingKeys.has(key)) return;
+  S.generatingKeys.add(key);
+  S.awaitingRegenKeys.delete(key);
+  S.convError = null;
+  render();
+
+  const personaText = (S.personaTexts && S.personaTexts[persona]) || PERSONAS[persona].text;
+  // Only include KB materials when they are actually loaded
+  // Use parsed conversationContext per active material; fall back to full content if not yet parsed
+  const convBlock = S.materials
+    .filter(m => !m.removed)
+    .map(m => m.parsed ? m.conversationContext : m.content)
+    .filter(Boolean)
+    .join('\n\n');
+  const prompt = `You are an expert chatbot conversation designer. Generate the phone conversation for a ${S.onbDomain} chatbot.
+
+BOT PERSONA:
+${personaText}
+
+PHONE SIMULATOR — only these component types render:
+${PHONE_SIM_SCHEMA_UNIVERSAL}
+${convBlock ? '\nDESIGN KNOWLEDGE BASE — apply these principles when deciding which components to use and how to write responses:\n' + convBlock : ''}
+
+SCENARIO TO DESIGN:
+Intent: "${S.submittedIntent}"
+Scenario ${scenario.id}: ${scenario.label}
+Category: ${scenario.category}
+Condition: ${scenario.condition}
+${(() => { const scRules = (S.scenarioRules && S.scenarioRules[scenario.id]) || []; const all = [...S.learnedRules, ...scRules, ...(S.pendingRule ? ['APPLY THIS SPECIFIC CHANGE TO THE RESPONSE: ' + S.pendingRule] : [])]; return all.length > 0 ? '\nADDITIONAL INSTRUCTIONS FROM DESIGNER:\n' + all.map(r=>'- '+r).join('\n') : ''; })()}
+
+Generate a focused 4–7 turn conversation. Always open with the user expressing their intent. Show the key bot response, any critical system state (error, confirmation), and the resolution. Skip micro-interactions — only include meaningful decision points, not every button tap.
+
+COMPONENT RULES:
+- Every field must have realistic values drawn from the scenario context (names, IDs, amounts, statuses, messages). Blank fields are invalid output.
+- Only include a component when it adds meaningful state information — not in every turn.
+
+Return ONLY a valid JSON array of turns. No markdown, no explanation.
+Turn format:
+- Bot: {"type":"bot", "bubbles":["text1","text2"], "component":{...}, "quickReplies":["Action one","Action two"]} (component and quickReplies optional)
+- User: {"type":"user", "text":"what the user taps or types"}`;
+
+  // On first attempt use the full prompt. On parse failure, retry with a lean prompt
+  // that only asks for valid JSON — smaller, faster, and more likely to succeed.
+  const retryPrompt = `The previous response was not valid JSON. Return ONLY a raw JSON array of turns for this scenario, no explanation:
+
+Scenario: ${scenario.label} (${scenario.category})
+Condition: ${scenario.condition}
+Intent: "${S.submittedIntent}"
+Persona: ${personaText.split('.')[0]}.
+
+Use this turn format:
+- Bot: {"type":"bot","bubbles":["..."],"quickReplies":["..."]}
+- User: {"type":"user","text":"..."}
+
+Return 4–6 turns as a JSON array. Raw JSON only.`;
+
+  let lastError = null;
+  for (let attempt = 0; attempt <= 1; attempt++) {
+    try {
+      const response = await window.cowork.askClaude(attempt === 0 ? prompt : retryPrompt);
+      const turns = parseJSON(response);
+      S.generatedConvos[key] = Array.isArray(turns) ? turns : turns.turns || [];
+      // Push to undo history as a deep clone so versions stay independent
+      pushConvoHistory(key);
+      lastError = null;
+      break;
+    } catch(e) {
+      lastError = e;
+      const isParseError = e.message && e.message.includes('parse');
+      if (!isParseError || attempt >= 1) break; // no retry for non-parse errors or 2nd failure
+    }
+  }
+  if (lastError) {
+    S.convError = lastError.message || 'Generation failed. Please try again.';
+  }
+  S.generatingKeys.delete(key);
+  render();
+}
+
+// S1 is always generated first (awaited) so the user sees a result immediately.
+// S2+ fire sequentially — one call per scenario preserves response quality.
+async function generateAll(scenarios, persona) {
+  const toGenerate = scenarios.filter(s => {
+    const k = s.id + '-' + persona;
+    return !S.generatedConvos[k] && !S.generatingKeys.has(k);
+  });
+  if (toGenerate.length === 0) return;
+
+  const [first, ...rest] = toGenerate;
+
+  // S1: await so it renders before the rest start
+  await generateConversation(first, persona);
+
+  // S2+: fire individually without awaiting — each renders as it completes
+  rest.forEach(s => generateConversation(s, persona));
+}
+
+// Returns the active persona set — domain-specific when loaded, fallback to PERSONAS
+function currentPersonas() {
+  return S.domainPersonas || PERSONAS;
+}
+
+// Parses a material once via Claude, extracting two lean summaries.
+// Runs in the background — updates mat in place, triggers render when done.
+async function parseMaterial(mat) {
+  mat.parsing = true;
+  mat.parsed  = false;
+  render();
+  const prompt = `You are a parsing assistant for a chatbot conversation design tool.
+Read the material below and extract two concise summaries.
+
+SCENARIO_CONTEXT: Information useful when expanding a user intent into scenario branches — domain conditions, failure modes, system states, user states, edge case triggers, process rules. Omit tone guidance, component specs, and design system rules.
+
+CONVERSATION_CONTEXT: Information useful when generating bot conversation turns — tone rules, response patterns, domain-specific facts the bot should know, handling guidance for specific situations, component usage rules. Omit abstract scenario branch structures and intent lists.
+
+If nothing in the material applies to a context, return "" for that field.
+Distil to essentials — do not copy verbatim.
+
+Return ONLY valid JSON: {"scenarioContext": "...", "conversationContext": "..."}
+
+MATERIAL NAME: ${mat.name}
+MATERIAL CONTENT:
+${mat.content}`;
+  try {
+    const response = await window.cowork.askClaude(prompt);
+    const result   = parseJSON(response);
+    mat.scenarioContext     = result.scenarioContext     || '';
+    mat.conversationContext = result.conversationContext || '';
+  } catch(e) {
+    // Fallback: use full content for both so nothing is silently lost
+    mat.scenarioContext     = mat.content;
+    mat.conversationContext = mat.content;
+  }
+  mat.parsed  = true;
+  mat.parsing = false;
+  render();
+}
+
+// Base material factory — used for user-uploaded materials (no pre-distillation).
+const makeBaseMat = (id, name, content, description = '') => ({ id, name, content, description, isDefault: true, removed: false, parsing: false, parsed: false, scenarioContext: '', conversationContext: '' });
+
+// Pre-distilled factory — skips parseMaterial() for known bundled fallbacks.
+// Also sets a stable KB card description so the excerpt doesn't fall back to raw content headers.
+// Falls back to makeBaseMat behaviour for any content that isn't a recognised constant.
+function makeMatWithPreDistill(id, name, content) {
+  const mat = makeBaseMat(id, name, content);
+  if      (content === GENERIC_GUIDELINES_FALLBACK)  { mat.scenarioContext = PREDISTILLED.unified_scenario;            mat.conversationContext = PREDISTILLED.unified_conv;            mat.parsed = true; mat.description = 'Adapted from H.P. Grice (1975) and Google Conversation Design (CC BY 4.0) · interpreted and extended for chatbot UI.'; }
+  else if (content === DESIGN_M3_FALLBACK)           { mat.scenarioContext = '';                                        mat.conversationContext = PREDISTILLED.m3_conv;                  mat.parsed = true; mat.description = 'Adapted from Material Design 3 by Google (material.io/design) · CC BY 4.0. Interpreted and extended for chatbot UI.'; }
+  else if (content === DESIGN_ANTX_FALLBACK)         { mat.scenarioContext = '';                                        mat.conversationContext = PREDISTILLED.antx_conv;                mat.parsed = true; mat.description = 'Adapted from Ant Design X by Ant Group (x.ant.design) · MIT licensed. AI-native chat library purpose-built for conversational AI.'; }
+  return mat;
+}
+
+// Returns a stable human-readable description for a material.
+// Checks content identity against known constants first so the correct description
+// is always shown regardless of whether the field was persisted in saved state.
+function getMaterialDescription(m) {
+  if (m.content === GENERIC_GUIDELINES_FALLBACK) return 'Adapted from H.P. Grice (1975) and Google Conversation Design (CC BY 4.0) · interpreted and extended for chatbot UI.';
+  if (m.content === DESIGN_M3_FALLBACK)          return 'Adapted from Material Design 3 by Google (material.io/design) · CC BY 4.0. Interpreted and extended for chatbot UI.';
+  if (m.content === DESIGN_ANTX_FALLBACK)        return 'Adapted from Ant Design X by Ant Group (x.ant.design) · MIT licensed. AI-native chat library purpose-built for conversational AI.';
+  // For user-uploaded or fetched materials, fall back to first readable prose line
+  if (m.description) return m.description;
+  const isAllCaps = l => l.length > 4 && l === l.toUpperCase() && /[A-Z]/.test(l);
+  return (m.content || '').split('\n')
+    .map(l => l.trim())
+    .filter(l => l && l.length > 10
+      && !l.startsWith('#') && !l.startsWith('═') && !l.startsWith('─')
+      && !l.startsWith('*') && !l.startsWith('|') && !l.startsWith('-')
+      && !isAllCaps(l))
+    [0] || '';
+}
+
+// Seeds S.materials from onboarding selections, fetching .md files where applicable.
+// Async because design system and guidelines may be fetched from relative paths.
+// Called at end of initDomain so parsing overlaps with intent entry.
+async function initMaterials() {
+  S.materials = [];
+  const makeMat = makeMatWithPreDistill;
+  // ── GUIDELINES ──────────────────────────────────────────────
+  const guidelinesFallback = GENERIC_GUIDELINES_FALLBACK;
+  const universalContent = await fetchMaterialFile('materials/unified-conversation-design-principles.md', guidelinesFallback);
+
+  if (S.onbGuidelines === 'paste' && S.onbGuidelinesPaste) {
+    // Custom guidelines are active; unified principles appear under Not Applied so user can switch
+    S.materials.push(makeMat('mat-guidelines', 'Custom guidelines', S.onbGuidelinesPaste));
+    S.materials.push({ ...makeMat('mat-guidelines-universal', 'Unified conversation design principles', universalContent), removed: true });
+  } else if (S.onbGuidelines === 'none') {
+    S.materials.push({ ...makeMat('mat-guidelines-universal', 'Unified conversation design principles', universalContent), removed: true });
+  } else {
+    S.materials.push(makeMat('mat-guidelines', 'Unified conversation design principles', universalContent));
+  }
+
+  // ── DESIGN SYSTEM ────────────────────────────────────────────
+  // M3 and Ant Design X are available for all domains.
+  // Selected one becomes active; the rest go to Not applied in the KB.
+  const dsOptions = ['m3', 'antx'];
+  const dsFetch = {
+    m3:   async () => fetchMaterialFile('materials/design-system-material3.md', DESIGN_M3_FALLBACK),
+    antx: async () => fetchMaterialFile('materials/design-system-ant-design-x.md', DESIGN_ANTX_FALLBACK),
+  };
+  const dsLabel = {
+    m3:   'Material Design 3',
+    antx: 'Ant Design X',
+  };
+
+  if (S.onbDesign === 'custom' && S.onbDesignPaste) {
+    // User-uploaded design system: add as active, all standard options go to Not applied
+    const customMat = makeMat('mat-design', 'Custom design system', S.onbDesignPaste);
+    customMat.dsKey = 'custom';
+    S.materials.push(customMat);
+    const altContents = await Promise.all(dsOptions.map(k => dsFetch[k]()));
+    dsOptions.forEach((dsKey, i) => {
+      const mat = { ...makeMat('mat-design-' + dsKey, dsLabel[dsKey], altContents[i]), removed: true, dsKey };
+      S.materials.push(mat);
+    });
+  } else {
+    const dsContents = await Promise.all(dsOptions.map(k => dsFetch[k]()));
+    dsOptions.forEach((dsKey, i) => {
+      const isSelected = S.onbDesign === dsKey;
+      const matId = isSelected ? 'mat-design' : 'mat-design-' + dsKey;
+      const content = dsContents[i];
+      const mat = makeMat(matId, dsLabel[dsKey], content);
+      mat.dsKey = dsKey; // always stamp so we can identify DS type after swaps
+      if (!isSelected) mat.removed = true;
+      S.materials.push(mat);
+    });
+  }
+
+  // Any extra materials uploaded during onboarding step 3
+  (S.onbExtras || []).forEach((e, i) => {
+    if (e.content && e.content.trim()) {
+      S.materials.push(makeMatWithPreDistill('mat-extra-' + i, e.name || 'Uploaded material', e.content));
+    }
+  });
+
+  // Parse all active, unparsed materials in parallel
+  S.materials.filter(m => !m.removed && !m.parsed).forEach(m => parseMaterial(m));
+}
+
+// Fires Claude to generate domain-specific intents + personas.
+// Called early (at onboarding step 0) so results are ready by the time the user reaches step 1.
+// Uses a staleness token (S.domainCallFor) so stale responses are discarded if the domain changes.
+// Split into two calls so the loading screen clears as soon as intents are ready.
+// Personas are only needed at step 3 — they generate in background after intents resolve.
+async function generateDomainContent(domain) {
+  S.domainLoading = true;
+  // Only render the loading state if we're already on step 1 — don't disrupt onboarding DOM
+  if (S.step === 1) render();
+
+  // Call 1: intents only — small prompt, resolves fast, clears the loading screen
+  const intentPrompt = `Generate 6 specific, realistic user intents for a ${domain} chatbot. Return ONLY a JSON array, no markdown:
+[{"id":"E1","text":"..."},{"id":"E2","text":"..."},{"id":"E3","text":"..."},{"id":"E4","text":"..."},{"id":"E5","text":"..."},{"id":"E6","text":"..."}]
+Each intent should be a concrete user goal (not generic filler).`;
+
+  try {
+    const intentResponse = await window.cowork.askClaude(intentPrompt);
+    if (S.domainCallFor !== domain) return;
+    const intents = parseJSON(intentResponse);
+    if (Array.isArray(intents) && intents.length > 0) S.domainIntents = intents;
+  } catch(e) {
+    if (S.domainCallFor === domain) console.warn('Intent generation failed, using defaults:', e.message);
+  }
+
+  // Intents ready — clear loading screen. Only render if we're on step 1 (where the
+  // spinner is shown); skip during onboarding to avoid disrupting textarea input.
+  if (S.domainCallFor === domain) {
+    S.domainLoading = false;
+    if (S.step === 1) render();
+  }
+
+  // Call 2: personas — runs after intents, populates the persona selector at step 3.
+  // Falls back to default PERSONAS if this call fails or hasn't resolved yet.
+  const personaPrompt = `Generate 2 distinct bot persona types for a ${domain} chatbot. Return ONLY valid JSON, no markdown:
+{"primary":{"name":"Bot name","tag":"Primary","text":"2-3 sentence persona instruction"},"secondary":{"name":"Bot name","tag":"Secondary","text":"2-3 sentence persona instruction"}}
+Make the two personas meaningfully different roles (e.g. for travel: Booking Assistant + Trip Advisor).`;
+  try {
+    const personaResponse = await window.cowork.askClaude(personaPrompt);
+    if (S.domainCallFor !== domain) return;
+    const personas = parseJSON(personaResponse);
+    if (personas && typeof personas === 'object') {
+      S.domainPersonas = personas;
+      const firstKey = Object.keys(personas)[0];
+      S.persona = firstKey;
+      S.personaTexts = {};
+      S.personaNames = {};
+      Object.keys(personas).forEach(k => {
+        S.personaTexts[k] = personas[k].text;
+        S.personaNames[k] = personas[k].name;
+      });
+      if (S.step !== 'onboarding') render();
+    }
+  } catch(e) {
+    if (S.domainCallFor === domain) console.warn('Persona generation failed, using defaults:', e.message);
+  }
+}
+
+// Called at step 0 Next click (early) AND again at onboarding end.
+// First call fires generateDomainContent alone in the queue — latency is hidden behind
+// onboarding steps 1+2. When domain resolves, initMaterials chains automatically so
+// parseMaterial runs in background while user picks intent.
+// Second call (onboarding end) is a no-op when domain hasn't changed.
+// generateScenarios and generateConversation both have raw-content fallbacks so they
+// never need to wait for parseMaterial to finish.
+function initDomain() {
+  const domain = (S.onbDomain || 'Crypto / Fintech').trim();
+  if (S.domainInitialized === domain) return; // already in flight or completed
+  S.domainInitialized = domain;
+  S.domainCallFor = domain;
+  // Fire and forget — no initMaterials chain here.
+  // initMaterials is always called explicitly at onboarding end so it runs with
+  // complete state (full paste content) rather than mid-input partial values.
+  generateDomainContent(domain);
+}
+
+async function applyTweak(tweak) {
+  if (!S.selectedScenario || !tweak.trim()) return;
+  const key = S.selectedScenario.id + '-' + S.persona;
+  delete S.generatedConvos[key];
+  S.pendingRule = tweak.trim();   // included in the prompt for this one generation only
+  S.tweak = '';
+  render();
+  await generateConversation(S.selectedScenario, S.persona);
+  // Move the rule to capturedRule for the Keep/Discard toast, then clear pendingRule
+  // so it doesn't bleed into other scenarios' generations
+  S.capturedRule = S.pendingRule;
+  S.pendingRule = null;
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PHONE SIMULATOR THEME SYSTEM
+// ═══════════════════════════════════════════════════════════════
+const PHONE_THEMES = {
+  // Material Design 3 — light, M3 purple
+  m3: {
+    dark: false,
+    bg: '#FFFBFE', surface: '#F4EFF4', surface2: '#ECE6F0',
+    fg: '#1C1B1F', fg2: '#49454F',
+    lime: '#6750A4', userText: '#FFFFFF', limeText: '#FFFFFF',
+    border: '#CAC4D0',
+    frameBorder: '#D4C8E0', frameShadow: '0 0 0 1px #C9C0D8,0 20px 60px rgba(0,0,0,0.12)',
+    notchPill: '#ECE6F0',
+    avatarGrad: 'linear-gradient(135deg,#6750A4,#9A82DB)', avatarColor: '#fff',
+    statusColor: '#4CAF50',
+  },
+  // Ant Design X — light, Ant Design blue
+  antx: {
+    dark: false,
+    bg: '#FFFFFF', surface: '#F5F5F5', surface2: '#FAFAFA',
+    fg: '#141414', fg2: '#8C8C8C',
+    lime: '#1677FF', userText: '#FFFFFF', limeText: '#FFFFFF',
+    border: '#D9D9D9',
+    frameBorder: '#D0D0D0', frameShadow: '0 0 0 1px #C8C8C8,0 20px 60px rgba(0,0,0,0.10)',
+    notchPill: '#E8E8E8',
+    avatarGrad: 'linear-gradient(135deg,#1677FF,#4096FF)', avatarColor: '#fff',
+    statusColor: '#52C41A',
+  },
+};
+
+function currentPhoneTheme() {
+  return PHONE_THEMES[S.onbDesign] || PHONE_THEMES.m3;
+}
+
+// Returns an inline style string with all --ph-* variable overrides for the given theme.
+// Applied to .phone-frame so every child element inherits the theme via CSS cascade.
+function phoneThemeVars(t) {
+  return [
+    '--ph-bg:' + t.bg,
+    '--ph-surface:' + t.surface,
+    '--ph-surface-2:' + t.surface2,
+    '--ph-fg:' + t.fg,
+    '--ph-fg-2:' + t.fg2,
+    '--ph-lime:' + t.lime,
+    '--ph-border:' + t.border,
+    '--ph-user-text:' + t.userText,
+    '--ph-lime-text:' + t.limeText,
+  ].join(';');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PHONE COMPONENT RENDERERS
+// ═══════════════════════════════════════════════════════════════
+function renderComp(comp, turnIdx, convKey, compSlot) {
+  if (!comp) return '';
+
+  // Helpers — editable span and remove-wrap (only active when convKey is set)
+  const ed = (val, field, extra) => {
+    if (!convKey) return esc(val||'');
+    return '<span class="comp-editable" contenteditable="true"'
+      + ' data-key="'+esc(convKey)+'" data-idx="'+turnIdx+'" data-slot="'+esc(compSlot||'')+'" data-field="'+field+'"'
+      + (extra||'') + '>' + esc(val||'') + '</span>';
+  };
+  const wrap = html => {
+    if (!convKey) return html;
+    return '<div class="comp-wrap">' + html
+      + '<button class="item-remove-btn" data-action="remove-component"'
+      + ' data-key="'+esc(convKey)+'" data-idx="'+turnIdx+'" data-slot="'+esc(compSlot||'')+'" title="Remove">×</button>'
+      + '</div>';
+  };
+
+  switch(comp.type) {
+    case 'metricCard':
+      if (!comp.label && !comp.value) return '';
+      return wrap('<div class="metric-card">'
+        + '<div class="metric-card-head">'
+        + (comp.label ? '<span class="metric-label">' + ed(comp.label, 'label') + '</span>' : '')
+        + '</div>'
+        + (comp.value ? '<div class="metric-value">' + ed(comp.value, 'value') + '</div>' : '')
+        + (comp.meta  ? '<div class="metric-meta">'  + ed(comp.meta,  'meta')  + '</div>' : '')
+        + (comp.cta   ? '<button class="btn-lime">'  + ed(comp.cta,   'cta')   + '</button>' : '')
+        + '</div>');
+
+    case 'confirmationOverlay': {
+      const rows = (comp.rows||[]).map((r, ri) =>
+        '<div class="conf-row"><span class="conf-label">'+esc(r.label)+'</span>'
+        +'<span class="conf-value">'+ed(r.value, 'row-value', ' data-ridx="'+ri+'"')+'</span></div>'
+      ).join('');
+      return wrap('<div class="conf-overlay">'
+        + '<div class="conf-title">' + ed(comp.title||'Confirm', 'title') + '</div>'
+        + rows
+        + '<div class="conf-actions">'
+        + '<button class="btn-conf cancel">'   + ed(comp.cancelCta||'Go back', 'cancelCta')   + '</button>'
+        + '<button class="btn-conf confirm' + (comp.destructive?' destructive':'') + '">'
+        + ed(comp.confirmCta||'Confirm', 'confirmCta') + '</button>'
+        + '</div></div>');
+    }
+
+    case 'warningBanner':
+      if (!comp.message) return '';
+      return wrap('<div class="banner banner-warning"><span class="banner-icon">⚠</span><span>' + ed(comp.message, 'message') + '</span></div>');
+    case 'infoBanner':
+      if (!comp.message) return '';
+      return wrap('<div class="banner banner-info"><span class="banner-icon">ℹ</span><span>' + ed(comp.message, 'message') + '</span></div>');
+    case 'successBanner':
+      if (!comp.message) return '';
+      return wrap('<div class="banner banner-success"><span class="banner-icon">✓</span><span>' + ed(comp.message, 'message') + '</span></div>');
+
+    case 'recordCard':
+      if (!comp.id && !comp.primaryValue && !comp.status) return '';
+      return wrap('<div class="record-card">'
+        + '<div class="record-card-head">'
+        + (comp.id     ? '<span class="record-id">'     + ed(comp.id,     'id')     + '</span>' : '')
+        + (comp.status ? '<span class="record-status">' + ed(comp.status, 'status') + '</span>' : '')
+        + '</div>'
+        + (comp.primaryValue ? '<div class="record-primary">'+ed(comp.primaryValue,'primaryValue')+'</div>' : '')
+        + ((comp.rows||[]).map((r,ri) =>
+            '<div class="record-row"><span class="record-label">'+esc(r.label)+'</span>'
+            +'<span class="record-value">'+ed(r.value,'row-value',' data-ridx="'+ri+'"')+'</span></div>'
+          ).join(''))
+        + '</div>');
+
+    case 'disambiguation': {
+      const opts = (comp.options||[]).map((o, oi) =>
+        '<div class="disambig-opt">'
+        + '<span class="disambig-key">'+esc(o.key||'')+'</span>'
+        + '<div><div class="disambig-label">'+ed(o.label||'','opt-label',' data-oidx="'+oi+'"')+'</div>'
+        + '<div class="disambig-desc">'+ed(o.desc||o.description||'','opt-desc',' data-oidx="'+oi+'"')+'</div></div></div>'
+      ).join('');
+      return wrap('<div class="disambig">' + opts + '</div>');
+    }
+
+    default:
+      return '';
+  }
+}
+
+function renderTurn(turn, turnIdx, convKey) {
+  const canEdit = convKey != null;
+
+  if (turn.type === 'user') {
+    const rawText = turn.text || '';
+    const bubbleAttrs = canEdit
+      ? ' class="bubble-user bubble-editable" contenteditable="true" data-field="text" data-key="'+esc(convKey)+'" data-idx="'+turnIdx+'" data-raw="'+esc(rawText)+'"'
+      : ' class="bubble-user"';
+    const rmBtn = canEdit
+      ? '<button class="item-remove-btn" data-action="remove-bubble" data-key="'+esc(convKey)+'" data-idx="'+turnIdx+'" data-bidx="0" title="Remove">×</button>'
+      : '';
+    const inner = '<div'+bubbleAttrs+'>'+renderBubbleMarkdown(rawText)+'</div>';
+    const wrapped = canEdit ? '<div class="bubble-wrap">'+inner+rmBtn+'</div>' : inner;
+    return '<div class="chat-turn user">'+wrapped+'</div>';
+  }
+
+  const bubbles = (turn.bubbles||[]).map((b, bi) => {
+    const bubbleAttrs = canEdit
+      ? ' class="bubble-bot bubble-editable" contenteditable="true" data-field="bubble" data-key="'+esc(convKey)+'" data-idx="'+turnIdx+'" data-bidx="'+bi+'" data-raw="'+esc(b)+'"'
+      : ' class="bubble-bot"';
+    const inner = '<div'+bubbleAttrs+'>'+renderBubbleMarkdown(b)+'</div>';
+    if (!canEdit) return inner;
+    const rmBtn = '<button class="item-remove-btn" data-action="remove-bubble" data-key="'+esc(convKey)+'" data-idx="'+turnIdx+'" data-bidx="'+bi+'" title="Remove">×</button>';
+    return '<div class="bubble-wrap">'+inner+rmBtn+'</div>';
+  }).join('');
+
+  const comp  = renderComp(turn.component,  turnIdx, convKey, 'component');
+  const comp2 = renderComp(turn.component2, turnIdx, convKey, 'component2');
+
+  const qrs = turn.quickReplies && turn.quickReplies.length
+    ? '<div class="quick-replies">'
+      + turn.quickReplies.map((q,i) =>
+          '<span class="quick-reply'+(i===0?' primary':'')+'">'+esc(q)+'</span>'
+        ).join('')
+      + '</div>'
+    : '';
+
+  return '<div class="chat-turn bot">'+bubbles+comp+comp2+qrs+'</div>';
+}
+
+function renderPhoneBody(scenario, persona) {
+  const key = scenario.id + '-' + persona;
+  if (S.generatingKeys.has(key)) {
+    return '<div class="phone-loading">'
+      + '<div class="skeleton phone-loading-line" style="width:52%"></div>'
+      + '<div class="skeleton phone-loading-line" style="width:36%"></div>'
+      + '<div class="skeleton phone-loading-line" style="width:44%"></div>'
+      + '<div style="height:6px"></div>'
+      + '<div class="skeleton phone-loading-line" style="width:38%;align-self:flex-end"></div>'
+      + '<div style="height:6px"></div>'
+      + '<div class="skeleton phone-loading-line" style="width:56%"></div>'
+      + '<div class="skeleton phone-loading-line" style="width:40%"></div>'
+      + '</div>';
+  }
+  // Check error BEFORE checking turns so the error state is always reachable
+  if (S.convError && S.selectedScenario && S.selectedScenario.id === scenario.id) {
+    return '<div class="phone-error">'
+      + '<div class="phone-error-icon">⚠</div>'
+      + '<div class="phone-error-msg">' + esc(S.convError) + '</div>'
+      + '<button class="phone-error-retry" data-action="retry-conv" data-sid="'+scenario.id+'">Try again</button>'
+      + '</div>';
+  }
+  const turns = S.generatedConvos[key];
+  if (!turns) {
+
+    if (S.personaDirty) {
+      return '<div class="phone-error">'
+        + '<div class="phone-error-icon">✏️</div>'
+        + '<div class="phone-error-msg">Persona updated — click Save &amp; regenerate to see new responses.</div>'
+        + '</div>';
+    }
+    return '<div class="phone-error">'
+      + '<div class="phone-error-icon">💬</div>'
+      + '<div class="phone-error-msg">Select this scenario to generate its response design.</div>'
+      + '</div>';
+  }
+  return turns.map((turn, i) => renderTurn(turn, i, key)).join('');
+}
+
+function renderPhoneSim(scenario, persona) {
+  const personas = currentPersonas();
+  const p = personas[persona] || Object.values(personas)[0];
+  const displayName = (S.personaNames && S.personaNames[persona]) || p.name;
+  const avatarLetter = esc(displayName.charAt(0).toUpperCase());
+  const t = currentPhoneTheme();
+  const themeVars = phoneThemeVars(t);
+  const frameExtra = 'border:7px solid '+t.frameBorder+';box-shadow:'+t.frameShadow;
+
+  // Undo/redo history bar
+  const key = scenario.id + '-' + persona;
+  const hist = S.convoHistory[key] || [];
+  const idx = S.convoHistoryIdx[key] ?? hist.length - 1;
+  const canUndo = hist.length > 1 && idx > 0;
+  const canRedo = idx < hist.length - 1;
+  const histBar = hist.length > 1
+    ? '<div class="phone-hist-bar">'
+      + '<button class="phone-hist-btn" data-action="undo-conv" data-sid="'+scenario.id+'" '+(canUndo?'':'disabled')+' title="Undo">↩</button>'
+      + '<span class="phone-hist-label">'+(idx+1)+' / '+hist.length+'</span>'
+      + '<button class="phone-hist-btn" data-action="redo-conv" data-sid="'+scenario.id+'" '+(canRedo?'':'disabled')+' title="Redo">↪</button>'
+      + '</div>'
+    : '';
+
+  return '<div class="phone-frame" style="'+themeVars+';'+frameExtra+'">'
+    + '<div class="phone-notch" style="background:'+t.bg+';border-bottom:1px solid '+t.border+'">'
+    + '<div class="phone-notch-pill" style="background:'+t.notchPill+'"></div></div>'
+    + '<div class="phone-header" style="background:'+t.surface+';border-bottom:1px solid '+t.border+'">'
+    + '<div class="phone-avatar" style="background:'+t.avatarGrad+';color:'+t.avatarColor+'">'+avatarLetter+'</div>'
+    + '<div><div class="phone-bot-name" style="color:'+t.fg+'">'+esc(displayName)+'</div>'
+    + '<div class="phone-bot-status" style="color:'+t.statusColor+'">● Online</div></div>'
+    + '</div>'
+    + '<div class="phone-body" id="phone-body-'+scenario.id+'" style="background:'+t.bg+'">'
+    + renderPhoneBody(scenario, persona)
+    + '</div></div>'
+    + histBar;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BADGE + HELPERS
+// ═══════════════════════════════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Renders markdown subset for phone sim bubbles (non-editable view only).
+// Handles: **bold**, *italic*, - bullet lists, line breaks.
+// Input is raw text; HTML-escaping applied first to prevent XSS.
+function renderBubbleMarkdown(text) {
+  const lines = String(text).split('\n');
+  let html = '';
+  let inList = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const listMatch = line.match(/^[-•]\s+(.+)$/);
+    if (listMatch) {
+      if (!inList) { html += '<ul style="margin:3px 0 3px 14px;padding:0;list-style:disc">'; inList = true; }
+      html += '<li>' + applyInlineMd(esc(listMatch[1])) + '</li>';
+    } else {
+      if (inList) { html += '</ul>'; inList = false; }
+      const escaped = applyInlineMd(esc(line));
+      html += escaped + (i < lines.length - 1 ? '<br>' : '');
+    }
+  }
+  if (inList) html += '</ul>';
+  return html;
+}
+function applyInlineMd(s) {
+  return s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+}
+
+function badgeClass(cat) {
+  return {
+    'Happy path':'badge-happy','Error state':'badge-error',
+    'Edge case':'badge-edge','Empty state':'badge-empty'
+  }[cat] || 'badge-empty';
+}
+
+function scenarioCardHTML(s, showActive) {
+  const active = showActive && S.selectedScenario && S.selectedScenario.id === s.id;
+  const key = s.id + '-' + S.persona;
+  const isGenerated  = !!S.generatedConvos[key];
+  const isGenerating = !isGenerated && S.generatingKeys.has(key);
+  const anyRunning   = S.generatingKeys.size > 0 || S.awaitingRegenKeys.size > 0;
+  // pending = queued but not yet started (includes pre-populated awaiting keys)
+  const isPending    = !isGenerated && ((anyRunning && !isGenerating) || S.awaitingRegenKeys.has(key));
+
+  const indicator = isGenerated ? '<span class="s-gen-done">✓</span>'
+    : (isGenerating || isPending) ? '<span class="s-gen-spinner"></span>'
+    : '';
+
+  return '<div class="scenario-card'+(active?' active':'')+'" data-action="select-scenario" data-sid="'+s.id+'">'
+    + '<div class="scenario-card-top">'
+    + '<span class="s-id">'+esc(s.id)+'</span>'
+    + '<span class="s-badge '+badgeClass(s.category)+'">'+esc(s.category)+'</span>'
+    + indicator
+    + '</div>'
+    + '<div class="s-label">'+esc(s.label)+'</div>'
+    + '<div class="s-condition">'+esc(s.condition)+'</div>'
+    + '</div>';
+}
+
+const LOGO_SVG = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none">'
+  + '<rect x="0.5" y="0.5" width="10" height="5.5" rx="1.8" fill="#FAFAF8"/>'
+  + '<rect x="3.5" y="8" width="10" height="5.5" rx="1.8" fill="#FAFAF8" opacity="0.5"/></svg>';
+
+// ═══════════════════════════════════════════════════════════════
+// TOPBAR + STEPBAR
+// ═══════════════════════════════════════════════════════════════
+function renderTopbar() {
+  const step = S.step;
+  const matCount = S.materials.filter(m => !m.removed).length + S.learnedRules.length;
+  const hasSaved = !!localStorage.getItem(STORAGE_KEY);
+  let right = (hasSaved ? '<button class="btn-ghost" data-action="new-session" style="display:inline-flex;align-items:center;gap:5px"><span style="font-size:14px;line-height:1">＋</span>New session</button>' : '')
+    + '<button class="btn-ghost" data-action="show-materials" style="display:inline-flex;align-items:center;gap:5px"><span style="font-size:14px;line-height:1">⊟</span>Knowledge base</button>';
+  const savedIndicator = hasSaved
+    ? '<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--fg-4);font-family:var(--font-mono)">'
+      + '<span class="persist-dot"></span>Autosaved</span>'
+    : '';
+
+  return '<div class="topbar' + (S.step === 'onboarding' ? ' topbar--with-sub' : '') + '">'
+    + '<div class="topbar-left">'
+    + '<div class="topbar-logo">'+LOGO_SVG+'</div>'
+    + '<div class="topbar-text-group">'
+    + '<span class="topbar-title">Turncraft: Chatbot conversation designer</span>'
+    + (S.step === 'onboarding' ? '<span class="topbar-sub">Define intents. Map scenarios. Design responses.</span>' : '')
+    + '</div>'
+    + '<span class="topbar-beta">Beta</span>'
+    + '</div>'
+    + '<div class="topbar-right">' + savedIndicator + right + '</div>'
+    + '</div>';
+}
+
+function renderStepBar() {
+  const steps = [
+    {n:1, label:'Define intent', key:1},
+    {n:2, label:'Map scenarios', key:2},
+    {n:3, label:'Design responses', key:3},
+  ];
+  const cur = S.step === 1 ? 1 : S.step === 2 ? 2 : S.step === 3 ? 3 : 0;
+  return '<div class="step-bar">'
+    + steps.map((s,i) => {
+        const isDone = cur > s.n;
+        const isActive = cur === s.n;
+        const canClick = s.n === 1 || (s.n === 2 && S.scenarios.length > 0) || (s.n === 3 && S.scenarios.length > 0);
+        return (i > 0 ? '<div class="step-connector"></div>' : '')
+          + '<div class="step-item" '+(canClick?'data-action="goto-step" data-step="'+s.n+'"':'')+'>'
+          + '<div class="step-dot'+(isActive?' active':'')+(isDone?' done':'')+'">'+( isDone?'✓':s.n)+'</div>'
+          + '<span class="step-label'+(isActive?' active':'')+'">'+s.label+'</span>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LEFT PANEL
+// ═══════════════════════════════════════════════════════════════
+function renderLeftPanel() {
+  const step = S.step;
+
+  // Scenario navigation — only in step 3
+  let scenarios = '';
+  if (step === 3 && S.scenarios.length > 0) {
+    const cards = S.scenarios.map(s => scenarioCardHTML(s, true)).join('');
+    const hasEmpty = S.scenarios.some(s => s.category === 'Empty state');
+    const showCoverage = !hasEmpty && !S.coverageDismissed;
+    scenarios = '<div>'
+      + '<div class="sec-label" style="display:flex;justify-content:space-between;align-items:center">'
+      + '<span>Scenarios ('+S.scenarios.length+')</span>'
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:6px">'+cards+'</div>'
+      + (showCoverage
+        ? '<div class="coverage-signal" style="margin-top:8px">'
+          + '<strong>No empty state yet</strong> — how does your bot respond when there\'s nothing to show?'
+          + '<div class="coverage-signal-actions">'
+          + '<button class="btn-accent-sm" data-action="add-empty-state">+ Add one</button>'
+          + '<button class="btn-muted-sm" data-action="dismiss-coverage">Looks good, skip →</button>'
+          + '</div></div>'
+        : '')
+      + '</div>';
+  }
+
+  const genBtn = S.generatingScenarios
+    ? '<button class="btn-primary" disabled><span style="display:flex;align-items:center;justify-content:center;gap:8px"><span class="gen-spinner" style="width:14px;height:14px;border-width:1.5px;border-color:rgba(250,250,248,0.3);border-top-color:#FAFAF8"></span>Generating…</span></button>'
+    : '<button class="btn-primary" data-action="generate" '+(S.intent.trim()?'':'disabled')+'>'
+      + (S.scenarios.length > 0 ? 'Regenerate →' : 'Generate scenarios →')
+      + '</button>';
+
+  return '<div class="left-panel"><div class="left-panel-inner">'
+    + '<div><div class="sec-label">User intent</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px">'
+    + '<textarea class="intent-textarea" rows="3" id="intent-input" placeholder="Describe what the user is trying to do…&#10;e.g. User wants to lock in a preferential rate">'
+    + esc(S.intent) + '</textarea>'
+    + genBtn
+    + (S.scenarioError ? '<div class="error-banner" style="margin-top:4px">⚠ '+esc(S.scenarioError)+'</div>' : '')
+    + '</div></div>'
+    + scenarios
+    + '</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 1 MAIN (intent picker)
+// ═══════════════════════════════════════════════════════════════
+function renderStep1Main() {
+  if (S.generatingScenarios) {
+    const isParsingMats = S.materials.some(m => m.parsing);
+    const labelHtml = isParsingMats
+      ? '<div class="gen-label-cycle">'
+        + '<span class="cycle-msg msg-a">Expanding intent into scenarios…</span>'
+        + '<span class="cycle-msg msg-b">Reading your training materials…</span>'
+        + '</div>'
+      : '<div class="gen-label">Expanding intent into scenarios…</div>';
+    return '<div class="intent-picker" style="align-items:center;justify-content:center">'
+      + '<div style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:60px 0">'
+      + '<div class="gen-spinner"></div>'
+      + labelHtml
+      + '<div class="gen-sub" style="max-width:280px">Claude is mapping all the paths your users might take.</div>'
+      + '</div></div>';
+  }
+
+  if (S.domainLoading) {
+    return '<div class="intent-picker" style="align-items:center;justify-content:center">'
+      + '<div style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:60px 0">'
+      + '<div class="gen-spinner"></div>'
+      + '<div class="gen-label">Setting up for ' + esc(S.onbDomain || 'your domain') + '…</div>'
+      + '<div class="gen-sub">Generating domain-specific intents and personas.</div>'
+      + '</div></div>';
+  }
+
+  const activeIntents = S.domainIntents || EXAMPLE_INTENTS;
+  const tiles = activeIntents.map(e =>
+    '<button class="intent-tile" data-action="pick-intent" data-text="'+esc(e.text)+'">'
+    + '<div class="intent-tile-id">'+esc(e.id)+'</div>'
+    + '<div class="intent-tile-text">'+esc(e.text)+'</div>'
+    + '</button>'
+  ).join('');
+
+  return '<div class="intent-picker">'
+    + '<div class="intent-picker-head">'
+    + '<div class="intent-picker-eyebrow">Step 1 — Define intent</div>'
+    + '<div class="intent-picker-heading">What is the user trying to do?</div>'
+    + '<div class="intent-picker-sub">Choose a suggested intent or write your own, then generate your scenario map.</div>'
+    + '</div>'
+    + '<div class="intent-grid">'+tiles+'</div>'
+    + '<div class="intent-divider">or describe your own</div>'
+    + '<div style="max-width:640px;align-self:center;width:100%;display:flex;flex-direction:column;gap:8px">'
+    + '<textarea id="intent-input-main" class="intent-textarea" rows="2" placeholder="e.g. User wants to lock in a preferential rate…">'+esc(S.intent)+'</textarea>'
+    + '<button id="generate-cta" class="btn-primary" data-action="generate" '+(S.intent.trim()?'':'disabled')+'>Generate scenarios →</button>'
+    + (S.scenarioError ? '<div class="error-banner">⚠ '+esc(S.scenarioError)+'</div>' : '')
+    + '</div>'
+    + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 2 MAIN (editable scenario editor)
+// ═══════════════════════════════════════════════════════════════
+function renderStep2Main() {
+  const hasEmpty = S.scenarios.some(s => s.category === 'Empty state');
+  const showCoverage = !hasEmpty && !S.coverageDismissed;
+
+  const CATEGORIES = ['Happy path', 'Error state', 'Edge case', 'Empty state'];
+
+  const editorRows = S.scenarios.map(s => {
+    const catOptions = CATEGORIES.map(c =>
+      '<option value="'+esc(c)+'"'+(s.category===c?' selected':'')+'>'+esc(c)+'</option>'
+    ).join('');
+    return '<div class="scenario-editor-row" data-sid="'+s.id+'">'
+      + '<div class="scenario-row-top">'
+      + '<span class="s-id" style="flex-shrink:0">'+esc(s.id)+'</span>'
+      + '<input class="scenario-label-input" data-sid="'+s.id+'" placeholder="Scenario label…" value="'+esc(s.label)+'">'
+      + '<select class="scenario-cat-select '+badgeClass(s.category)+'" data-action="set-scenario-cat" data-sid="'+s.id+'">'+catOptions+'</select>'
+      + '<button class="scenario-delete" data-action="delete-scenario" data-sid="'+s.id+'" title="Remove scenario">×</button>'
+      + '</div>'
+      + '<textarea class="scenario-condition-input" data-sid="'+s.id+'" placeholder="IF [describe the system/user state that triggers this scenario]…" rows="2">'+esc(s.condition)+'</textarea>'
+      + '</div>';
+  }).join('');
+
+  return '<div class="intent-strip">'
+    + '<div style="display:flex;align-items:center;gap:10px;min-width:0">'
+    + '<span class="strip-label">Intent</span>'
+    + '<span class="strip-text">'+esc(S.submittedIntent)+'</span>'
+    + '</div>'
+    + '</div>'
+    + '<div class="step2-wrap">'
+    + '<div class="step2-head">'
+    + '<div><div class="step2-heading">Edit your scenarios</div>'
+    + '<div class="step2-sub">'+S.scenarios.length+' branches generated · Edit labels, conditions, and types, then design responses.</div></div>'
+    + '<button class="btn-primary" style="width:auto;flex-shrink:0" '
+    + (S.scenarios.length > 0 ? 'data-action="generate-responses"' : 'disabled')
+    + '>Design responses →</button>'
+    + '</div>'
+    + '<div class="scenario-editor-list">'+editorRows+'</div>'
+    + '<button class="add-scenario-btn" data-action="add-scenario">+ Add scenario</button>'
+    + (showCoverage
+      ? '<div class="coverage-signal"><strong>Coverage gap:</strong> No empty state scenario yet.'
+        + '<div class="coverage-signal-actions">'
+        + '<button class="btn-accent-sm" data-action="add-empty-state">+ Add one</button>'
+        + '<button class="btn-muted-sm" data-action="dismiss-coverage">Coverage is complete →</button>'
+        + '</div></div>'
+      : '')
+    + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STEP 3 MAIN (response design)
+// ═══════════════════════════════════════════════════════════════
+function renderStep3Main() {
+  const sel = S.selectedScenario;
+
+  const personaBlock = '<div class="persona-block">'
+    + '<div class="persona-header">'
+    + '<span class="persona-header-label">Bot persona</span>'
+    + '<select class="persona-dropdown" id="persona-dropdown" style="margin-left:auto">'
+    + Object.keys(currentPersonas()).map(pk =>
+        '<option value="'+pk+'"'+(S.persona===pk?' selected':'')+'>'
+        + esc((S.personaNames && S.personaNames[pk]) || currentPersonas()[pk].name)
+        + '</option>'
+      ).join('')
+    + '</select>'
+    + '</div>'
+    + '<div class="persona-body">'
+    + '<div class="persona-fields-row">'
+    + '<div class="persona-field persona-name-field">'
+    + '<label class="persona-field-label">Name</label>'
+    + '<input id="persona-name-input" class="scenario-label-input" style="font-size:12px;font-weight:500" placeholder="Bot name…" value="'+esc((S.personaNames && S.personaNames[S.persona]) || (currentPersonas()[S.persona] || {}).name || '')+'">'
+    + '</div>'
+    + '<div class="persona-field persona-text-field">'
+    + '<label class="persona-field-label">Persona instruction</label>'
+    + '<textarea id="persona-textarea" class="persona-textarea" rows="3">'+esc((S.personaTexts && S.personaTexts[S.persona]) || (currentPersonas()[S.persona] || {}).text || '')+'</textarea>'
+    + '</div>'
+    + '</div>'
+    + '<button class="btn-persona-save" data-action="save-persona">Save &amp; regenerate →</button>'
+    + (S.personaSaveToast ? '<div class="persona-save-feedback">✓ Persona saved — regenerating responses…</div>' : '')
+    + '</div>'
+    + '</div>';
+
+  const phoneSim = sel
+    ? '<div class="phone-wrap">'
+      + '<div class="phone-scenario-header">'
+      + '<div class="phone-scenario-top">'
+      + '<span class="ph-scenario-id">'+esc(sel.id)+'</span>'
+      + '<span class="ph-scenario-title">'+esc(sel.label)+'</span>'
+      + '<span class="s-badge '+badgeClass(sel.category)+'">'+esc(sel.category)+'</span>'
+      + '</div>'
+      + '<div class="ph-scenario-condition">'+esc(sel.condition)+'</div>'
+      + '</div>'
+      + renderPhoneSim(sel, S.persona)
+      + '</div>'
+    : '<div style="font-size:13px;color:var(--fg-3);text-align:center;padding:40px 0">Select a scenario from the left to see its response design.</div>';
+
+  const sidebar = renderStep3Sidebar();
+
+  return '<div class="intent-strip">'
+    + '<div style="display:flex;align-items:center;gap:10px;min-width:0">'
+    + '<span class="strip-label">Intent</span>'
+    + '<span class="strip-text">'+esc(S.submittedIntent)+'</span>'
+    + '</div>'
+    + '</div>'
+    + '<div class="step3-layout">'
+    + '<div class="step3-main">'+personaBlock+phoneSim+'</div>'
+    + sidebar
+    + '</div>';
+}
+
+function renderStep3Sidebar() {
+  const sel = S.selectedScenario;
+  const pendingToast = S.capturedRule
+    ? '<div class="tweak-toast">'
+      + '<div class="toast-label">Keep this rule?</div>'
+      + '<div class="toast-rule">"'+esc(S.capturedRule)+'"</div>'
+      + '<div class="toast-actions">'
+      + '<button class="btn-keep" data-action="keep-rule-all" style="font-size:10px">All scenarios</button>'
+      + '<button class="btn-keep" data-action="keep-rule-scenario" style="font-size:10px;background:var(--fg-2)">'+(sel ? esc(sel.id) + ' only' : 'This scenario')+'</button>'
+      + '<button class="btn-discard" data-action="discard-rule">✕</button>'
+      + '</div></div>'
+    : '';
+
+  const tweak = '<div>'
+    + '<div class="sec-label">Suggest a tweak</div>'
+    + '<div style="display:flex;flex-direction:column;gap:7px">'
+    + '<textarea class="tweak-textarea" id="tweak-input" rows="3" placeholder="e.g. Lead with the balance shortfall before showing the deposit CTA…">'
+    + esc(S.tweak) + '</textarea>'
+    + '<button class="btn-sm" data-action="apply-tweak" '+(S.tweak.trim()&&sel?'':'disabled')+'>Apply tweak →</button>'
+    + '</div></div>';
+
+  const footerZone = '<div class="sidebar-footer">'
+    + '<div>'
+    + '<div class="sec-label" style="margin-bottom:8px">Session</div>'
+    + '<div class="sidebar-footer-row">'
+    + '<button class="btn-footer-primary" data-action="save-session">'+(S.savingSession ? 'Saving…' : 'Save →')+'</button>'
+    + '<label class="btn-footer-outline">'
+    + 'Load'
+    + '<input type="file" accept=".json" id="load-session-input" style="display:none">'
+    + '</label>'
+    + '</div>'
+    + '<div style="font-size:10px;color:var(--fg-4);margin-top:5px;line-height:1.5">Downloads a .json — reload on any device or share with a teammate.</div>'
+    + '</div>'
+    + '<div>'
+    + '<div class="sec-label" style="margin-bottom:8px">Export design</div>'
+    + '<button class="btn-footer-primary" data-action="open-export" style="width:100%">Export →</button>'
+    + '<div style="font-size:10px;color:var(--fg-4);margin-top:5px;line-height:1.5">HTML for sharing, or JSONL for LLM training.</div>'
+    + '</div>'
+    + '</div>';
+
+  return '<div class="step3-sidebar" style="display:flex;flex-direction:column;overflow:hidden">'
+    + '<div class="step3-sidebar-inner" style="flex:1;overflow-y:auto">'
+    + tweak + pendingToast
+    + '</div>'
+    + footerZone
+    + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MATERIALS PANEL
+// ═══════════════════════════════════════════════════════════════
+function renderMaterials() {
+  if (!S.showMaterials) return '';
+
+  // Usage label per material type
+  const matMeta = (id) => {
+    if (id.startsWith('mat-design')) return { use: 'Responses only' };
+    return { use: 'Scenarios · Responses' };
+  };
+
+  // Flat list — all active materials treated equally regardless of origin
+  const renderItem = m => {
+    const isReplacing  = S.replacingMat === m.id;
+    const isPreviewing = S.previewMatId === m.id;
+    const meta = matMeta(m.id);
+
+    if (isReplacing) {
+      return '<div class="mat-card">'
+        + '<div class="mat-replace-form" style="border-radius:var(--r-md);border:none">'
+        + '<input class="mat-replace-input" id="replace-mat-name" placeholder="Material name…" value="'+esc(m.name)+'" style="margin-bottom:6px">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+        + '<span style="font-size:11px;color:var(--fg-3)">Content</span>'
+        + '<label for="replace-mat-file" style="font-size:11px;color:var(--fg-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px 10px;cursor:pointer;background:var(--bg)">↑ Upload .md</label>'
+        + '<input type="file" id="replace-mat-file" accept=".md,.txt" style="display:none">'
+        + '</div>'
+        + '<textarea class="mat-replace-textarea" id="replace-mat-content" placeholder="Paste updated content here, or upload an .md file above…">'+esc(m.content)+'</textarea>'
+        + '<div style="display:flex;gap:6px;margin-top:2px">'
+        + '<button class="mat-opt-btn" style="width:auto;padding:6px 12px" data-action="cancel-replace-mat">Cancel</button>'
+        + '<button class="btn-mat-done" data-action="confirm-replace-mat" data-id="'+m.id+'">Save</button>'
+        + '</div></div>'
+        + '</div>';
+    }
+
+    // Status badge
+    const statusBadge = m.parsing
+      ? '<span class="mat-badge badge-parsing">Parsing…</span>'
+      : m.parsed
+        ? (m.isDefault ? '<span class="mat-badge badge-ready">Ready</span>' : '<span class="mat-badge badge-custom">Custom</span>')
+        : '';
+
+    // Usage badge
+    const useBadge = '<span class="mat-badge badge-use">'+meta.use+'</span>';
+
+    const excerpt = getMaterialDescription(m);
+    const excerptTrimmed = excerpt.length > 90 ? excerpt.slice(0, 90).replace(/\s+\S*$/, '') + '…' : excerpt;
+
+    return '<div class="mat-card">'
+      + '<div class="mat-card-body">'
+      + '<div class="mat-card-name-line"><span class="mat-card-name">'+esc(m.name)+'</span>'+statusBadge+'</div>'
+      + (excerptTrimmed ? '<div class="mat-card-excerpt">'+esc(excerptTrimmed)+'</div>' : '')
+      + '</div>'
+      + '<div class="mat-card-actions">'
+      + '<button class="mat-card-btn'+(isPreviewing?' active':'')+'" data-action="preview-mat" data-id="'+m.id+'">'+(isPreviewing?'Hide preview':'Preview')+'</button>'
+      + '<button class="mat-card-btn" data-action="replace-mat" data-id="'+m.id+'">Replace</button>'
+      + '<button class="mat-card-btn danger" data-action="remove-mat" data-id="'+m.id+'">Remove</button>'
+      + '</div>'
+      + (isPreviewing ? '<div class="mat-preview-block">'+esc(m.content)+'</div>' : '')
+      + '</div>';
+  };
+
+  // Not applied — all removed materials (offered in onboarding but not selected, or manually removed)
+  const removedMats = S.materials.filter(m => m.removed);
+  const removedSection = removedMats.length > 0
+    ? '<div>'
+      + '<div class="sec-label" style="padding:0 4px;margin-bottom:8px;margin-top:18px">Not applied</div>'
+      + '<div class="mat-card-list">'
+      + removedMats.map(m => {
+          const excerpt = getMaterialDescription(m);
+          const excerptTrimmed = excerpt.length > 90 ? excerpt.slice(0, 90).replace(/\s+\S*$/, '') + '…' : excerpt;
+          return '<div class="mat-card mat-card-na">'
+            + '<div class="mat-card-body">'
+            + '<div class="mat-card-name-line"><span class="mat-card-name">'+esc(m.name)+'</span></div>'
+            + (excerptTrimmed ? '<div class="mat-card-excerpt">'+esc(excerptTrimmed)+'</div>' : '')
+            + '</div>'
+            + '<div class="mat-card-actions">'
+            + '<button class="mat-card-btn" data-action="add-back-mat" data-id="'+m.id+'">Apply</button>'
+            + '</div>'
+            + '</div>';
+        }).join('')
+      + '</div>'
+      + '</div>'
+    : '';
+
+  // Learned from tweaks
+  const allScenarioRuleEntries = Object.entries(S.scenarioRules || {}).filter(([,rules]) => rules && rules.length > 0);
+  const totalRules = S.learnedRules.length + allScenarioRuleEntries.reduce((n,[,r])=>n+r.length,0);
+  const rulesSection = totalRules > 0
+    ? '<div>'
+      + '<div class="sec-label" style="padding:0 4px;margin-bottom:6px;margin-top:18px">Learned from tweaks ('+totalRules+')</div>'
+      + (S.learnedRules.length > 0
+        ? '<div style="font-size:10px;color:var(--fg-3);padding:0 4px;margin-bottom:4px">All scenarios</div>'
+          + S.learnedRules.map((r, i) =>
+              '<div class="learned-rule" style="font-size:11.5px">'
+              + '<span class="rule-dot">·</span>'
+              + '<span style="flex:1">'+esc(r)+'</span>'
+              + '<button class="rule-remove" data-action="remove-rule" data-idx="'+i+'">×</button>'
+              + '</div>'
+            ).join('')
+        : '')
+      + allScenarioRuleEntries.map(([sid, rules]) =>
+          '<div style="font-size:10px;color:var(--fg-3);padding:0 4px;margin-top:8px;margin-bottom:4px">'+esc(sid)+' only</div>'
+          + rules.map((r, i) =>
+              '<div class="learned-rule" style="font-size:11.5px">'
+              + '<span class="rule-dot">·</span>'
+              + '<span style="flex:1">'+esc(r)+'</span>'
+              + '<button class="rule-remove" data-action="remove-scenario-rule" data-sid="'+esc(sid)+'" data-idx="'+i+'">×</button>'
+              + '</div>'
+            ).join('')
+        ).join('')
+      + '</div>'
+    : '';
+
+  // Add material form or button
+  const addSection = S.showAddMaterial
+    ? '<div class="mat-replace-form" style="border:1px solid var(--border);border-radius:var(--r-md);margin-top:4px">'
+      + '<div class="sec-label" style="margin-bottom:6px">New material</div>'
+      + '<input class="mat-replace-input" id="mat-new-name" placeholder="Material name…" style="margin-bottom:6px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+      + '<span style="font-size:11px;color:var(--fg-3)">Content</span>'
+      + '<label for="mat-file-upload-new" style="font-size:11px;color:var(--fg-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px 10px;cursor:pointer;background:var(--bg);transition:all var(--dur) var(--ease)">↑ Upload .md</label>'
+      + '<input type="file" id="mat-file-upload-new" accept=".md,.txt" style="display:none">'
+      + '</div>'
+      + '<textarea class="mat-replace-textarea" id="mat-new-content" placeholder="Paste content here, or upload an .md file above — guidelines, scenarios, brand voice, tone notes…" style="height:120px"></textarea>'
+      + '<div style="display:flex;gap:6px;margin-top:2px">'
+      + '<button class="mat-opt-btn" style="width:auto;padding:6px 12px" data-action="cancel-add-material">Cancel</button>'
+      + '<button class="btn-mat-done" data-action="save-custom-material">Add</button>'
+      + '</div></div>'
+    : '<button class="btn-ghost" style="width:100%;font-size:12px;padding:9px;margin-top:8px" data-action="show-add-material">+ Add material</button>';
+
+  const activeMats = S.materials.filter(m => !m.removed);
+  const isEmpty = S.step === 'onboarding' && activeMats.length === 0 && removedMats.length === 0 && S.learnedRules.length === 0;
+  const emptyState = isEmpty
+    ? '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center">'
+      + '<div style="font-size:28px;margin-bottom:14px;opacity:0.25">⊞</div>'
+      + '<div style="font-size:13px;font-weight:500;color:var(--fg-2);margin-bottom:6px">No materials loaded</div>'
+      + '<div style="font-size:12px;color:var(--fg-3);line-height:1.6;max-width:240px">Complete onboarding to load your design system, conversation guidelines, and domain scenarios.</div>'
+      + '</div>'
+    : '';
+  const itemsHTML =
+    emptyState
+    + (activeMats.length > 0 ? '<div class="sec-label" style="padding:0 4px;margin-bottom:8px">Applied</div><div class="mat-card-list">'+activeMats.map(renderItem).join('')+'</div>' : '')
+    + removedSection
+    + rulesSection
+    + addSection;
+
+  // Footer — always visible; regenerates only if already in step 3 with scenarios
+  const canRegen = S.step === 3 && S.scenarios.length > 0;
+  const footer = '<div style="padding:16px 20px;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg)">'
+    + '<button class="btn-primary" data-action="apply-and-regen">'
+    + (canRegen ? 'Apply and regenerate' : 'Apply')
+    + '</button>'
+    + '<div style="font-size:11px;color:var(--fg-3);margin-top:6px;text-align:center;line-height:1.5">'
+    + (canRegen
+        ? 'Closes the panel and regenerates all responses with the updated knowledge base'
+        : 'Saves changes — responses will use the updated knowledge base on next generation')
+    + '</div>'
+    + '</div>';
+
+  return '<div class="mat-overlay" data-action="close-materials">'
+    + '<div class="mat-panel" data-action="noop">'
+    + '<div class="mat-header"><div>'
+    + '<div class="mat-title">Knowledge base</div>'
+    + '</div><button class="mat-close" data-action="close-materials">×</button></div>'
+    + '<div class="mat-body" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px">'+itemsHTML+'</div>'
+    + footer
+    + '</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════════════════════════
+function renderOnboarding() {
+  const step = S.onbStep;
+  const dots = [0,1,2].map(i =>
+    '<div class="onb-dot'+(i===step?' active':i<step?' done':'')+'"></div>'
+  ).join('');
+
+  let body = '';
+  let eyebrow = 'Step '+(step+1)+' of 3';
+  let heading = '';
+  let sub = '';
+  let canNext = step === 1 && S.onbDesign === 'custom' ? S.onbDesignPaste.trim().length > 0 : true;
+
+  if (step === 0) {
+    heading = 'What domain are you designing for?';
+    sub = 'This shapes the example intents and personas. You can swap everything from the Knowledge base later.';
+    canNext = S.onbDomain.trim().length > 0;
+    // 3-category framing — shows what the tool will set up
+    const catPill = (icon, label, note) =>
+      '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'
+      + '<div style="width:26px;height:26px;border-radius:6px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">'+icon+'</div>'
+      + '<div><div style="font-size:12px;font-weight:500;color:var(--fg)">'+label+'</div>'
+      + '<div style="font-size:11px;color:var(--fg-3);margin-top:1px">'+note+'</div></div>'
+      + '</div>';
+    body = '<input class="onb-input" id="onb-domain" placeholder="e.g. Crypto / Fintech, Healthcare, E-commerce…" value="'+esc(S.onbDomain)+'" autocomplete="off">'
+      + '<div style="margin-top:6px">'
+      + '<div style="font-size:10px;font-weight:600;font-family:var(--font-mono);color:var(--fg-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">What you can set up</div>'
+      + catPill('⊞', 'Design system', 'Tells the tool which UI components to use in bot responses.')
+      + catPill('§', 'Conversation guidelines', 'Sets the rules for voice and tone, error handling, and interaction patterns.')
+      + '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0">'
+      + '<div style="width:26px;height:26px;border-radius:6px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">≡</div>'
+      + '<div><div style="font-size:12px;font-weight:500;color:var(--fg)">Training materials</div>'
+      + '<div style="font-size:11px;color:var(--fg-3);margin-top:1px">Upload domain scenarios, support ticket data, brand voice docs, or any other reference material.</div></div>'
+      + '</div>'
+      + '</div>';
+  } else if (step === 1) {
+    heading = 'Choose a design system';
+    sub = 'This teaches the tool which components to suggest in responses. You can swap or add more later.';
+    const opts = [
+      {v:'m3', label:'Material Design 3', desc:'Google\'s widely adopted cross-platform system. Familiar to most mobile designers.'},
+      {v:'antx', label:'Ant Design X', desc:'AI-native chat library by Ant Group. Built for streaming, agent steps, and conversational AI.'},
+      {v:'custom', label:'Upload my own', desc:'Paste or upload your design system doc — component list, tokens, usage rules.'},
+      {v:'none', label:'Skip for now', desc:'Add a design system later from the Knowledge base.'},
+    ];
+    body = '<div class="onb-options">'
+      + opts.map(o =>
+          '<div class="onb-option'+(S.onbDesign===o.v?' selected':'')+'" data-action="set-onb-design" data-val="'+o.v+'">'
+          + '<div class="onb-radio"></div>'
+          + '<div><div class="onb-opt-label">'+esc(o.label)+'</div>'
+          + '<div class="onb-opt-desc">'+esc(o.desc)+'</div></div>'
+          + '</div>'
+        ).join('')
+      + (S.onbDesign === 'custom'
+          ? '<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">'
+            + '<div style="display:flex;align-items:center;justify-content:space-between">'
+            + '<span style="font-size:11px;color:var(--fg-3)">Paste content or upload a .md file</span>'
+            + '<label for="onb-design-file" style="font-size:11px;color:var(--fg-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px 10px;cursor:pointer;background:var(--bg)">↑ Upload .md</label>'
+            + '<input type="file" id="onb-design-file" accept=".md,.txt" style="display:none">'
+            + '</div>'
+            + '<textarea class="onb-input" id="onb-design-paste" rows="4" style="height:96px;resize:none;font-size:12px" placeholder="Paste your design system documentation here — component list, usage rules, token names…">'+esc(S.onbDesignPaste)+'</textarea>'
+            + '</div>'
+          : '')
+      + '</div>';
+  } else {
+    heading = 'Choose training materials';
+    sub = 'Training materials govern how the tool generates responses. Add as many as you need — you can always update them from the Knowledge base.';
+    const opts = [
+      {v:'preloaded', label:'Unified conversation design principles', desc:'Adapted from H.P. Grice (1975) and Google Conversation Design (CC BY 4.0) — works across domains.'},
+      {v:'paste', label:'Upload my own guidelines', desc:'Paste or upload your own doc — the tool adapts its governance layer immediately.'},
+      {v:'none', label:'Skip for now', desc:'Add guidelines later from the Knowledge base.'},
+    ];
+    const extras = S.onbExtras || [];
+    body = '<div style="font-size:10px;font-weight:600;font-family:var(--font-mono);color:var(--fg-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Conversation guidelines</div>'
+      + '<div class="onb-options" style="margin-bottom:14px">'
+      + opts.map(o =>
+          '<div class="onb-option'+(S.onbGuidelines===o.v?' selected':'')+'" data-action="set-onb-guidelines" data-val="'+o.v+'">'
+          + '<div class="onb-radio"></div>'
+          + '<div><div class="onb-opt-label">'+esc(o.label)+'</div>'
+          + '<div class="onb-opt-desc">'+esc(o.desc)+'</div></div>'
+          + '</div>'
+        ).join('')
+      + (S.onbGuidelines==='paste'
+        ? '<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between">'
+          + '<span style="font-size:11px;color:var(--fg-3)">Paste content or upload a .md file</span>'
+          + '<label for="onb-guidelines-file" style="font-size:11px;color:var(--fg-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px 10px;cursor:pointer;background:var(--bg)">↑ Upload .md</label>'
+          + '<input type="file" id="onb-guidelines-file" accept=".md,.txt" style="display:none">'
+          + '</div>'
+          + '<textarea class="onb-input" id="onb-paste" rows="4" style="height:96px;resize:none;font-size:12px" placeholder="Paste your conversation design guidelines here…">'+esc(S.onbGuidelinesPaste)+'</textarea>'
+          + '</div>'
+        : '')
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:8px">'
+      + '<div style="font-size:10px;font-weight:600;font-family:var(--font-mono);color:var(--fg-3);text-transform:uppercase;letter-spacing:.08em">Other materials</div>'
+      + '<div style="font-size:11px;color:var(--fg-3)">Upload domain-specific scenarios, support ticket data, brand voice docs, or any other reference material the tool should learn from.</div>'
+      + (extras.length > 0
+        ? '<div style="display:flex;flex-direction:column;gap:4px">'
+          + extras.map((e, i) =>
+              '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm)">'
+              + '<span style="font-size:12px;color:var(--fg-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(e.name)+'</span>'
+              + '<button data-action="remove-onb-extra" data-idx="'+i+'" style="background:none;border:none;color:var(--fg-4);cursor:pointer;font-size:14px;padding:0 0 0 8px;flex-shrink:0">×</button>'
+              + '</div>'
+            ).join('')
+          + '</div>'
+        : '')
+      + '<div>'
+      + '<label for="onb-extras-file" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--fg-2);border:1px solid var(--border-2);border-radius:var(--r-sm);padding:7px 14px;cursor:pointer;background:var(--bg);transition:all var(--dur) var(--ease)" onmouseover="this.style.borderColor=\'var(--fg-3)\'" onmouseout="this.style.borderColor=\'var(--border-2)\'">'
+      + '<span style="font-size:13px">↑</span> Upload file'
+      + '</label>'
+      + '<input type="file" id="onb-extras-file" accept=".md,.txt,.csv" multiple style="display:none">'
+      + '</div>'
+      + '</div>';
+  }
+
+  const loadSessionLink = step === 0
+    ? '<div style="display:flex;align-items:center;gap:10px;margin-top:4px">'
+      + '<div style="flex:1;height:1px;background:var(--border)"></div>'
+      + '<span style="font-size:11px;color:var(--fg-4);white-space:nowrap">or</span>'
+      + '<div style="flex:1;height:1px;background:var(--border)"></div>'
+      + '</div>'
+      + '<label style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;border-radius:var(--r-sm);cursor:pointer;transition:background var(--dur) var(--ease)" onmouseover="this.style.background=\'var(--hover-tint)\'" onmouseout="this.style.background=\'\'">'
+      + '<span style="font-size:12px;color:var(--accent);font-weight:500">Load a saved session</span>'
+      + '<input type="file" accept=".json" id="load-session-input" style="display:none">'
+      + '</label>'
+    : '';
+
+  return '<div class="onb-overlay">'
+    + '<div class="onb-card">'
+    + '<div class="onb-top">'
+    + '<div class="onb-top-row1">'
+    + '<div class="onb-brand">'
+    + '<div class="onb-brand-logo">'+LOGO_SVG+'</div>'
+    + '</div>'
+    + '<button class="onb-skip" data-action="skip-onb">Skip setup →</button>'
+    + '</div>'
+    + '<div class="onb-dots">'+dots+'</div>'
+    + '</div>'
+    + '<div>'
+    + '<div class="onb-eyebrow">'+eyebrow+'</div>'
+    + '<div class="onb-heading">'+heading+'</div>'
+    + '<div class="onb-sub">'+sub+'</div>'
+    + '</div>'
+    + body
+    + '<div class="onb-actions">'
+    + (step > 0 ? '<button class="btn-onb-back" data-action="onb-back">← Back</button>' : '')
+    + '<button class="btn-onb-next" data-action="onb-next" '+(canNext?'':'disabled')+'>'
+    + (step < 2 ? 'Continue →' : 'Start designing →')
+    + '</button></div>'
+    + loadSessionLink
+    + '</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT PANEL RENDER
+// ═══════════════════════════════════════════════════════════════
+function renderExportPanel() {
+  if (!S.showExportPanel) return '';
+
+  const sel = S.selectedScenario;
+  const sec = S.exportSections || {};
+  const scope = S.exportScope || 'selected';
+  const fmt = S.exportFormat || 'html';
+  const isJSONL = fmt === 'jsonl';
+
+  // HTML mode options
+  const needsScope = !isJSONL && (sec.conversation || sec.spec);
+  const nothingChecked = !isJSONL && !sec.conversation && !sec.spec && !sec.map && !sec.rules;
+  const noSelWarning = needsScope && scope === 'selected' && !sel;
+  const canExport = isJSONL ? S.scenarios.length > 0 : (!nothingChecked && !noSelWarning);
+
+  const formatToggle = '<div>'
+    + '<div class="sec-label" style="margin-bottom:8px">Format</div>'
+    + '<div class="export-scope-toggle">'
+    + '<button class="export-scope-btn'+(fmt==='html'?' active':'')+'" data-action="set-export-format" data-fmt="html">HTML</button>'
+    + '<button class="export-scope-btn'+(isJSONL?' active':'')+'" data-action="set-export-format" data-fmt="jsonl">JSONL — for training</button>'
+    + '</div></div>';
+
+  const htmlOptions = !isJSONL ? (() => {
+    const checks = [
+      { key: 'conversation', label: 'Conversations',  desc: 'The full bot–user exchange for each scenario, including UI components.' },
+      { key: 'spec',         label: 'Prompt specs',   desc: 'Trigger condition, persona, behaviour steps, and guardrails per scenario.' },
+      { key: 'map',          label: 'Scenario map',   desc: 'All scenarios as a table — ID, category, and trigger condition.' },
+      { key: 'rules',        label: 'Learned from tweaks', desc: 'Rules the tool extracted from your tweaks.' },
+    ];
+    const checksHTML = checks.map(c =>
+      '<div class="export-check-row" data-action="toggle-export-section" data-key="'+c.key+'">'
+      + '<div class="export-checkbox'+(sec[c.key]?' checked':'')+'"></div>'
+      + '<div><div class="export-check-label">'+c.label+'</div>'
+      + '<div class="export-check-desc">'+c.desc+'</div></div>'
+      + '</div>'
+    ).join('');
+    const scopeHTML = needsScope
+      ? '<div style="margin-top:14px">'
+        + '<div class="sec-label" style="margin-bottom:8px">Scope</div>'
+        + '<div class="export-scope-toggle">'
+        + '<button class="export-scope-btn'+(scope==='selected'?' active':'')+'" data-action="set-export-scope" data-scope="selected">Selected scenario</button>'
+        + '<button class="export-scope-btn'+(scope==='all'?' active':'')+'" data-action="set-export-scope" data-scope="all">All scenarios</button>'
+        + '</div></div>'
+      : '';
+    const warningHTML = noSelWarning
+      ? '<div style="font-size:11px;color:var(--status-warn);padding:8px 12px;background:#fff7ed;border-radius:var(--r-sm);border:1px solid #fed7aa">Select a scenario first, or switch scope to All scenarios.</div>'
+      : '';
+    return '<div style="margin-top:14px"><div class="sec-label" style="margin-bottom:8px">What to include</div>'
+      + '<div class="export-check-list">'+checksHTML+'</div></div>'
+      + scopeHTML + warningHTML;
+  })() : '';
+
+  const jsonlInfo = isJSONL
+    ? '<div style="margin-top:14px;font-size:12px;color:var(--fg-2);line-height:1.6;padding:10px 12px;background:var(--surface);border-radius:var(--r-sm);border:1px solid var(--border)">'
+      + 'One training example per scenario. Each contains a system prompt (persona + guardrails) and the full conversation in <span style="font-family:var(--font-mono);font-size:11px">{"role","content"}</span> format — ready for OpenAI, Anthropic, or Hugging Face fine-tuning.'
+      + '</div>'
+    : '';
+
+  const btnLabel = isJSONL ? 'Download .jsonl file →' : 'Download HTML file →';
+
+  return '<div class="export-overlay" data-action="close-export">'
+    + '<div class="export-panel" data-action="noop">'
+    + '<div class="export-header">'
+    + '<span class="export-title">Export design</span>'
+    + '<button class="export-close" data-action="close-export">×</button>'
+    + '</div>'
+    + '<div class="export-body">'
+    + formatToggle
+    + htmlOptions
+    + jsonlInfo
+    + '<button class="btn-export-go" data-action="do-export"'+(canExport?'':' disabled')+'>'+btnLabel+'</button>'
+    + '</div>'
+    + '</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PERSISTENCE — localStorage auto-save / restore
+// ═══════════════════════════════════════════════════════════════
+const STORAGE_KEY = 'chatbot-designer-v1';
+const STATE_VERSION = 2;
+
+function saveState() {
+  try {
+    const toSave = {
+      version: STATE_VERSION,
+      step: S.step, onbStep: S.onbStep, onbDomain: S.onbDomain,
+      onbGuidelines: S.onbGuidelines, onbGuidelinesPaste: S.onbGuidelinesPaste, onbExtras: S.onbExtras || [],
+      onbDesign: S.onbDesign, onbDesignUrl: S.onbDesignUrl, onbDesignPaste: S.onbDesignPaste,
+      onbScenarios: S.onbScenarios,
+      materials: S.materials.map(m => ({
+        id: m.id, name: m.name, content: m.content, description: m.description || '', isDefault: m.isDefault,
+        removed: m.removed, parsed: m.parsed,
+        scenarioContext: m.scenarioContext, conversationContext: m.conversationContext,
+      })),
+      intent: S.intent, submittedIntent: S.submittedIntent,
+      scenarios: S.scenarios, selectedScenario: S.selectedScenario,
+      persona: S.persona, personaOpen: S.personaOpen,
+      domainPersonas: S.domainPersonas,
+      generatedConvos: S.generatedConvos,
+      convoHistory: S.convoHistory,
+      convoHistoryIdx: S.convoHistoryIdx,
+      learnedRules: S.learnedRules,
+      scenarioRules: S.scenarioRules || {},
+      coverageDismissed: S.coverageDismissed,
+      personaTexts: S.personaTexts, personaNames: S.personaNames,
+      exportScope: S.exportScope, exportSections: S.exportSections,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch(e) { /* storage full or unavailable — silent */ }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (saved.version !== STATE_VERSION) { localStorage.removeItem(STORAGE_KEY); return false; }
+    Object.assign(S, saved);
+    // Re-init non-serializable / transient state
+    S.generatingKeys = new Set();
+    S.awaitingRegenKeys = new Set();
+    S.generatingScenarios = false;
+    S.scenarioError = null; S.convError = null;
+    S.pendingRule = null; S.capturedRule = null; S.tweak = '';
+    S.showMaterials = false; S.replacingMat = null; S.previewMatId = null;
+    S.copyDone = false; S.showCopyChooser = false; S.personaSaveToast = false;
+    S.showAddMaterial = false; S.domainLoading = false; S.domainCallFor = null; S.personaDirty = false;
+    S.showExportPanel = false;
+    // Migration: remove retired materials from saved sessions
+    S.materials = S.materials.filter(m =>
+      m.name !== 'Fintech conversation guidelines' &&
+      m.name !== 'Fintech scenarios and top issues'
+    );
+    // Materials already in saved state — mark domain as initialised so initDomain() skips re-init
+    S.domainInitialized = (S.onbDomain || 'Crypto / Fintech').trim();
+    // Re-parse any materials that weren't fully parsed (e.g. mid-session refresh)
+    S.materials.filter(m => !m.removed && !m.parsed).forEach(m => parseMaterial(m));
+    return true;
+  } catch(e) { localStorage.removeItem(STORAGE_KEY); return false; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT — build self-contained HTML file for download
+// ═══════════════════════════════════════════════════════════════
+function buildExportHTML(scope, sections) {
+  sections = sections || { conversation: true, spec: true, map: false, rules: false };
+  scope = scope || 'selected';
+  const sel = S.selectedScenario;
+  const personaName = (S.personaNames && S.personaNames[S.persona]) || S.persona;
+  const personaText = (S.personaTexts && S.personaTexts[S.persona]) || (currentPersonas()[S.persona] || {}).text || '';
+
+  const esc2 = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  // ── Component renderer ────────────────────────────────────────
+  function renderCompExport(c) {
+    if (!c || !c.type) return '';
+    switch (c.type) {
+      case 'metricCard':
+        return `<div class="xc-metric">
+          ${c.label ? `<div class="xc-metric-label">${esc2(c.label)}</div>` : ''}
+          ${c.value ? `<div class="xc-metric-val">${esc2(c.value)}</div>` : ''}
+          ${c.meta  ? `<div class="xc-metric-meta">${esc2(c.meta)}</div>` : ''}
+          ${c.cta   ? `<div class="xc-metric-cta">${esc2(c.cta)}</div>` : ''}
+        </div>`;
+      case 'confirmationOverlay': {
+        const rows = (c.rows||[]).map(r =>
+          `<div class="xc-conf-row"><span class="xc-conf-k">${esc2(r.label)}</span><span>${esc2(r.value)}</span></div>`
+        ).join('');
+        return `<div class="xc-conf">
+          <div class="xc-conf-title">${esc2(c.title||'Confirm')}</div>
+          <div class="xc-conf-rows">${rows}</div>
+          <div class="xc-conf-btns">
+            ${c.cancelCta ? `<div class="xc-btn xc-btn-ghost">${esc2(c.cancelCta)}</div>` : ''}
+            <div class="xc-btn ${c.destructive ? 'xc-btn-dest' : 'xc-btn-primary'}">${esc2(c.confirmCta||'Confirm')}</div>
+          </div>
+        </div>`;
+      }
+      case 'warningBanner':
+        return `<div class="xc-banner xc-banner-warn">⚠ ${esc2(c.message||'')}</div>`;
+      case 'infoBanner':
+        return `<div class="xc-banner xc-banner-info">ℹ ${esc2(c.message||'')}</div>`;
+      case 'successBanner':
+        return `<div class="xc-banner xc-banner-ok">✓ ${esc2(c.message||'')}</div>`;
+      case 'recordCard':
+        return `<div class="xc-record">
+          <div class="xc-record-top">
+            ${c.id     ? `<span class="xc-record-id">${esc2(c.id)}</span>` : ''}
+            ${c.status ? `<span class="xc-record-status">${esc2(c.status)}</span>` : ''}
+          </div>
+          ${c.primaryValue ? `<div class="xc-record-primary">${esc2(c.primaryValue)}</div>` : ''}
+          ${(c.rows||[]).map(r => `<div class="xc-record-row"><span class="xc-record-label">${esc2(r.label)}</span><span class="xc-record-value">${esc2(r.value)}</span></div>`).join('')}
+        </div>`;
+      case 'disambiguation':
+        return `<div class="xc-disambig">${(c.options||[]).map(o =>
+          `<div class="xc-disambig-opt">
+            <span class="xc-disambig-key">${esc2(o.key)}</span>
+            <div><div class="xc-disambig-label">${esc2(o.label)}</div><div class="xc-disambig-desc">${esc2(o.desc||'')}</div></div>
+          </div>`).join('')}</div>`;
+      default:
+        return `<div class="xc-banner xc-banner-info">${esc2(c.type)}</div>`;
+    }
+  }
+
+  // ── Derive BEHAVIOUR steps from bot turns ─────────────────────
+  function deriveBehaviour(turns) {
+    const steps = [];
+    turns.forEach(t => {
+      if (t.type !== 'bot') return;
+      let desc = '';
+      const bubbles = t.bubbles || [];
+      if (bubbles.length > 0) desc += bubbles[0];
+      if (bubbles.length > 1) desc += ` [+${bubbles.length - 1} more bubble${bubbles.length > 2 ? 's' : ''}]`;
+      const comps = [t.component, t.component2].filter(Boolean);
+      if (comps.length) desc += (desc ? ' — Shows ' : 'Shows ') + comps.map(c => c.type).join(' + ');
+      if (t.quickReplies && t.quickReplies.length) desc += (desc ? ' — Offers: ' : 'Offers: ') + t.quickReplies.join(' / ');
+      if (desc) steps.push(desc);
+    });
+    return steps;
+  }
+
+  // ── Render one scenario block (spec + conversation) ───────────
+  function renderScenarioSection(scenario, turns, onlyWhat) {
+    const doSpec = onlyWhat !== 'conversation';
+    const doConv = onlyWhat !== 'spec';
+    const badgeColors = { happy: '#166534', error: '#991B1B', edge: '#92400E' };
+    const badgeColor = badgeColors[scenario.category] || '#666';
+
+    let out = `<div class="scenario-section">
+      <div class="scenario-heading">
+        <span class="scenario-id">${esc2(scenario.id)}</span>
+        <span class="scenario-label">${esc2(scenario.label)}</span>
+        <span class="scenario-badge" style="color:${badgeColor}">${esc2(scenario.category)}</span>
+      </div>`;
+
+    if (doSpec) {
+      const behaviourSteps = deriveBehaviour(turns);
+      const guardrails = S.learnedRules && S.learnedRules.length > 0 ? S.learnedRules : null;
+      out += `<div class="spec-block">
+        <div class="spec-row"><span class="spec-k">TRIGGER</span><span>${esc2(scenario.condition)}</span></div>
+        <div class="spec-row"><span class="spec-k">PERSONA</span><span>${esc2(personaText || personaName)}</span></div>
+        ${behaviourSteps.length > 0
+          ? `<div class="spec-row"><span class="spec-k">BEHAVIOUR</span><ol class="spec-ol">${behaviourSteps.map(s => `<li>${esc2(s)}</li>`).join('')}</ol></div>`
+          : ''}
+        <div class="spec-row"><span class="spec-k">GUARDRAILS</span>${guardrails
+          ? `<ul class="spec-ul">${guardrails.map(r => `<li>${esc2(r)}</li>`).join('')}</ul>`
+          : `<span class="spec-placeholder">None captured — use the tweak field to add guardrails</span>`
+        }</div>
+      </div>`;
+    }
+
+    if (doConv) {
+      if (turns.length > 0) {
+        out += `<div class="conv-wrap">`;
+        turns.forEach(t => {
+          if (t.type === 'user') {
+            out += `<div class="turn user"><div class="bubble user-bubble">${esc2(t.text||'')}</div></div>`;
+          } else {
+            out += `<div class="turn bot">`;
+            (t.bubbles || []).forEach(b => { out += `<div class="bubble bot-bubble">${esc2(b)}</div>`; });
+            if (t.component)  out += renderCompExport(t.component);
+            if (t.component2) out += renderCompExport(t.component2);
+            if (t.quickReplies && t.quickReplies.length) {
+              out += `<div class="qr-row">${t.quickReplies.map(q => `<span class="qr">${esc2(q)}</span>`).join('')}</div>`;
+            }
+            out += `</div>`;
+          }
+        });
+        out += `</div>`;
+      } else {
+        out += `<div class="no-conv">No conversation generated for this scenario yet.</div>`;
+      }
+    }
+
+    out += `</div>`;
+    return out;
+  }
+
+  // ── Build document body ───────────────────────────────────────
+  let body = '';
+  let hasContent = false;
+
+  // Header
+  body += `<div class="doc-header">
+    <div class="doc-eyebrow">Chatbot Conversation Designer</div>
+    <h1>${esc2(S.submittedIntent || 'Design export')}</h1>
+    <div class="doc-meta">Persona: ${esc2(personaName)} &nbsp;·&nbsp; ${S.scenarios.length} scenario${S.scenarios.length !== 1 ? 's' : ''} &nbsp;·&nbsp; Exported ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</div>
+  </div>`;
+
+  // Scenario map
+  if (sections.map && S.scenarios.length > 0) {
+    hasContent = true;
+    body += `<section><h2>Scenario map</h2><table><thead><tr><th>ID</th><th>Label</th><th>Category</th><th>Condition</th></tr></thead><tbody>`;
+    S.scenarios.forEach(s => {
+      const bc = s.category === 'happy' ? '#166534' : s.category === 'error' ? '#991B1B' : '#92400E';
+      body += `<tr><td class="mono">${esc2(s.id)}</td><td>${esc2(s.label)}</td><td style="color:${bc};font-weight:600">${esc2(s.category)}</td><td class="muted">${esc2(s.condition)}</td></tr>`;
+    });
+    body += `</tbody></table></section>`;
+  }
+
+  // Conversations and/or specs
+  if (sections.conversation || sections.spec) {
+    const onlyWhat = sections.conversation && sections.spec ? 'all'
+                   : sections.conversation ? 'conversation'
+                   : 'spec';
+
+    if (scope === 'all') {
+      hasContent = true;
+      const heading = onlyWhat === 'all' ? 'Conversations &amp; specs'
+                    : onlyWhat === 'conversation' ? 'Conversations'
+                    : 'Prompt specs';
+      body += `<section><h2>${heading}</h2>`;
+      S.scenarios.forEach(scenario => {
+        const k = scenario.id + '-' + S.persona;
+        body += renderScenarioSection(scenario, S.generatedConvos[k] || [], onlyWhat);
+      });
+      body += `</section>`;
+    } else if (sel) {
+      hasContent = true;
+      const k = sel.id + '-' + S.persona;
+      body += renderScenarioSection(sel, S.generatedConvos[k] || [], onlyWhat);
+    }
+  }
+
+  // Design rules
+  if (sections.rules && S.learnedRules && S.learnedRules.length > 0) {
+    hasContent = true;
+    body += `<section><h2>Learned from tweaks</h2><ul class="spec-ul">`;
+    S.learnedRules.forEach(r => { body += `<li>${esc2(r)}</li>`; });
+    body += `</ul></section>`;
+  }
+
+  if (!hasContent) {
+    body += `<p style="color:#888;padding:32px 0">No content to export for this selection.</p>`;
+  }
+
+  // ── Styles ────────────────────────────────────────────────────
+  const css = `
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#FAFAF8;color:#1A1A1A;padding:48px 24px;max-width:860px;margin:0 auto;line-height:1.6}
+.doc-header{margin-bottom:40px;padding-bottom:24px;border-bottom:2px solid #EBEBE8}
+.doc-eyebrow{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#8A8A86;margin-bottom:8px;font-family:monospace}
+h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
+h2{font-size:16px;font-weight:600;letter-spacing:-.01em;margin-bottom:20px;padding-bottom:8px;border-bottom:1px solid #EBEBE8}
+.doc-meta{font-size:13px;color:#8A8A86}
+section{margin-bottom:48px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
+th{text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#8A8A86;padding:6px 12px 6px 0;border-bottom:2px solid #EBEBE8}
+td{padding:9px 12px 9px 0;border-bottom:1px solid #F4F4F0;vertical-align:top}
+.mono{font-family:monospace;font-size:12px;color:#D4A017}
+.muted{color:#4A4A4A;font-size:12px}
+/* Scenario block */
+.scenario-section{margin-bottom:40px;padding-bottom:40px;border-bottom:2px dashed #EBEBE8}
+.scenario-section:last-child{border-bottom:none}
+.scenario-heading{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.scenario-id{font-family:monospace;font-size:12px;color:#D4A017;font-weight:700}
+.scenario-label{font-size:15px;font-weight:600;color:#1A1A1A}
+.scenario-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+/* Spec */
+.spec-block{background:#F4F4F0;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.spec-row{display:flex;gap:16px;font-size:13px;align-items:flex-start}
+.spec-k{font-family:monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#D4A017;width:90px;flex-shrink:0;padding-top:3px}
+.spec-ol,.spec-ul{padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:13px;color:#1A1A1A}
+.spec-placeholder{color:#8A8A86;font-style:italic;font-size:12px}
+/* Conversation */
+.conv-wrap{display:flex;flex-direction:column;gap:10px;padding:16px;background:#F4F4F0;border-radius:8px}
+.no-conv{font-size:12px;color:#8A8A86;font-style:italic;padding:8px 0}
+.turn{display:flex;flex-direction:column;gap:4px}
+.turn.user{align-items:flex-end}
+.turn.bot{align-items:flex-start}
+.bubble{padding:8px 13px;border-radius:12px;font-size:13px;max-width:72%;line-height:1.5}
+.bot-bubble{background:#fff;border:1px solid #EBEBE8}
+.user-bubble{background:#1A1A1A;color:#fff}
+.qr-row{display:flex;flex-wrap:wrap;gap:5px;padding:2px 0}
+.qr{padding:4px 10px;border-radius:999px;border:1px solid #EBEBE8;font-size:11px;color:#4A4A4A;background:#fff}
+/* Metric card */
+.xc-metric{background:#fff;border:1px solid #EBEBE8;border-radius:10px;padding:12px 14px;max-width:200px;display:flex;flex-direction:column;gap:5px}
+.xc-metric-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#8A8A86;font-family:monospace}
+.xc-metric-val{font-size:22px;font-weight:700;letter-spacing:-.02em;color:#1A1A1A}
+.xc-metric-meta{font-size:11px;color:#8A8A86}
+.xc-metric-cta{margin-top:6px;background:#1A1A1A;color:#fff;font-size:12px;font-weight:600;padding:7px 12px;border-radius:6px;text-align:center}
+/* Confirmation overlay */
+.xc-conf{background:#fff;border:1px solid #EBEBE8;border-radius:10px;padding:12px 14px;max-width:230px;display:flex;flex-direction:column;gap:10px}
+.xc-conf-title{font-size:13px;font-weight:600;color:#1A1A1A}
+.xc-conf-rows{display:flex;flex-direction:column;gap:5px}
+.xc-conf-row{display:flex;justify-content:space-between;font-size:11px;color:#4A4A4A;gap:8px}
+.xc-conf-k{color:#8A8A86}
+.xc-conf-btns{display:flex;gap:8px;margin-top:2px}
+.xc-btn{flex:1;padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;text-align:center}
+.xc-btn-ghost{border:1px solid #EBEBE8;color:#4A4A4A;background:#F4F4F0}
+.xc-btn-primary{background:#1A1A1A;color:#fff}
+.xc-btn-dest{background:#DC2626;color:#fff}
+/* Banners */
+.xc-banner{padding:9px 13px;border-radius:8px;font-size:12px;max-width:72%;line-height:1.5}
+.xc-banner-warn{background:#FFF7ED;border:1px solid #FED7AA;color:#92400E}
+.xc-banner-info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF}
+.xc-banner-ok{background:#F0FDF4;border:1px solid #BBF7D0;color:#166534}
+/* Record card */
+.xc-record{background:#fff;border:1px solid #EBEBE8;border-radius:10px;padding:12px 14px;max-width:220px;display:flex;flex-direction:column;gap:5px}
+.xc-record-top{display:flex;justify-content:space-between;align-items:center}
+.xc-record-id{font-family:monospace;font-size:11px;color:#8A8A86}
+.xc-record-status{font-size:11px;font-weight:600;color:#166534}
+.xc-record-primary{font-size:16px;font-weight:700;color:#1A1A1A}
+.xc-record-row{display:flex;justify-content:space-between;font-size:11px;color:#4A4A4A;gap:8px;padding:3px 0;border-bottom:1px solid #F4F4F0}
+.xc-record-label{color:#8A8A86}.xc-record-value{font-weight:500}
+/* Disambiguation */
+.xc-disambig{background:#fff;border:1px solid #EBEBE8;border-radius:10px;padding:8px;max-width:230px;display:flex;flex-direction:column;gap:4px}
+.xc-disambig-opt{display:flex;align-items:flex-start;gap:10px;padding:8px;border-radius:6px;border:1px solid #EBEBE8}
+.xc-disambig-key{font-family:monospace;font-size:11px;font-weight:700;color:#D4A017;width:14px;flex-shrink:0;padding-top:1px}
+.xc-disambig-label{font-size:12px;font-weight:600;color:#1A1A1A}
+.xc-disambig-desc{font-size:11px;color:#8A8A86;margin-top:1px}
+`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${esc2(S.submittedIntent || 'Design export')} — Chatbot Design</title>
+<style>${css}</style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
+}
+
+// Builds a JSONL string for LLM fine-tuning.
+// Each scenario with a generated conversation becomes one training example.
+// Format: OpenAI-compatible {"messages":[...]} — one JSON object per line.
+// System message = persona instruction + guardrails (global + scenario-scoped rules).
+// Assistant turns include text bubbles; UI components are appended as a JSON block
+// so the model can learn to output structured UI alongside text.
+function buildExportJSONL() {
+  const personaText = (S.personaTexts && S.personaTexts[S.persona])
+    || (PERSONAS[S.persona] && PERSONAS[S.persona].text) || '';
+  const personaName = (S.personaNames && S.personaNames[S.persona])
+    || (PERSONAS[S.persona] && PERSONAS[S.persona].name) || S.persona;
+
+  const lines = [];
+
+  S.scenarios.forEach(scenario => {
+    const key = scenario.id + '-' + S.persona;
+    const turns = S.generatedConvos[key];
+    if (!turns || turns.length === 0) return;
+
+    // Build system prompt
+    const globalRules = S.learnedRules || [];
+    const scenRules = (S.scenarioRules && S.scenarioRules[scenario.id]) || [];
+    const allRules = [...globalRules, ...scenRules];
+    let systemContent = 'You are ' + personaName + '. ' + personaText;
+    systemContent += '\n\nContext: The user intent is "' + S.submittedIntent + '". Scenario: "' + scenario.label + '" (' + scenario.category + '): ' + scenario.condition;
+    if (allRules.length > 0) {
+      systemContent += '\n\nGuardrails:\n' + allRules.map(r => '- ' + r).join('\n');
+    }
+
+    // Build messages array
+    const messages = [{ role: 'system', content: systemContent }];
+
+    turns.forEach(t => {
+      if (t.type === 'user') {
+        messages.push({ role: 'user', content: t.text || '' });
+      } else {
+        const bubbles = (t.bubbles || []).join('\n');
+        const comps = [t.component, t.component2].filter(Boolean);
+        const compBlock = comps.length > 0
+          ? '\n\n[UI_COMPONENT]\n' + JSON.stringify(comps.length === 1 ? comps[0] : comps, null, 2)
+          : '';
+        const qrBlock = (t.quickReplies && t.quickReplies.length > 0)
+          ? '\n\n[QUICK_REPLIES]\n' + t.quickReplies.join(' | ')
+          : '';
+        messages.push({ role: 'assistant', content: bubbles + compBlock + qrBlock });
+      }
+    });
+
+    lines.push(JSON.stringify({ messages }));
+  });
+
+  return lines.join('\n');
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+// Selectors of scrollable containers we want to preserve across re-renders
+const SCROLL_SELECTORS = ['.step3-main', '.step3-sidebar-inner', '.left-panel-inner', '.mat-body', '.phone-body', '.step2-wrap'];
+
+function render() {
+  // Save scroll positions before wiping innerHTML
+  const scrollMap = {};
+  SCROLL_SELECTORS.forEach(sel => {
+    const el = document.querySelector(sel);
+    if (el && el.scrollTop > 0) scrollMap[sel] = el.scrollTop;
+  });
+
+  const step = S.step;
+  let mainContent = '';
+
+  if (step === 1) mainContent = renderStep1Main();
+  else if (step === 2) mainContent = renderStep2Main();
+  else if (step === 3) mainContent = renderStep3Main();
+
+  const showStep = step !== 'onboarding';
+
+  document.getElementById('app').innerHTML =
+    renderTopbar()
+    + (showStep ? renderStepBar() : '')
+    + (showStep
+      ? '<div class="main-layout">' + (step !== 1 ? renderLeftPanel() : '') + '<div class="main-panel">' + mainContent + '</div></div>'
+      : '')
+    + (step === 'onboarding' ? renderOnboarding() : '')
+    + renderMaterials()
+    + renderExportPanel();
+
+  // Restore scroll positions after re-render
+  SCROLL_SELECTORS.forEach(sel => {
+    if (scrollMap[sel] != null) {
+      const el = document.querySelector(sel);
+      if (el) el.scrollTop = scrollMap[sel];
+    }
+  });
+
+  // Scroll the keep/discard toast into view whenever it's freshly shown
+  if (S.capturedRule) {
+    const toastEl = document.querySelector('.tweak-toast');
+    if (toastEl) toastEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  attachHandlers();
+  saveState();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVENT HANDLERS
+// ═══════════════════════════════════════════════════════════════
+function attachHandlers() {
+  // Helper: sync both intent textareas and CTA button state without re-render
+  function syncIntentUI(val) {
+    S.intent = val;
+    const left = document.getElementById('intent-input');
+    const main = document.getElementById('intent-input-main');
+    const cta  = document.getElementById('generate-cta');
+    if (left && left !== document.activeElement) left.value = val;
+    if (main && main !== document.activeElement) main.value = val;
+    if (cta) cta.disabled = !val.trim();
+  }
+
+  // Left panel intent textarea
+  const intentEl = document.getElementById('intent-input');
+  if (intentEl) {
+    intentEl.addEventListener('input', e => syncIntentUI(e.target.value));
+    intentEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (S.intent.trim()) generateScenarios(S.intent.trim()); }
+    });
+  }
+
+  // Main canvas intent textarea (Step 1)
+  const intentMainEl = document.getElementById('intent-input-main');
+  if (intentMainEl) {
+    intentMainEl.addEventListener('input', e => syncIntentUI(e.target.value));
+  }
+
+  // Tweak textarea live update
+  const tweakEl = document.getElementById('tweak-input');
+  if (tweakEl) {
+    tweakEl.addEventListener('input', e => {
+      S.tweak = e.target.value;
+      const applyBtn = document.querySelector('[data-action="apply-tweak"]');
+      if (applyBtn) applyBtn.disabled = !(S.tweak.trim() && S.selectedScenario);
+    });
+  }
+
+  // Onboarding inputs
+  const domainEl = document.getElementById('onb-domain');
+  if (domainEl) {
+    domainEl.addEventListener('input', e => { S.onbDomain = e.target.value; });
+    domainEl.addEventListener('keydown', e => { if (e.key === 'Enter') handleAction('onb-next'); });
+    domainEl.focus();
+  }
+  const pasteEl = document.getElementById('onb-paste');
+  if (pasteEl) pasteEl.addEventListener('input', e => { S.onbGuidelinesPaste = e.target.value; });
+  const guidelinesFileEl = document.getElementById('onb-guidelines-file');
+  if (guidelinesFileEl) {
+    guidelinesFileEl.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => { S.onbGuidelinesPaste = ev.target.result; render(); };
+      reader.readAsText(file);
+    });
+  }
+  const designPasteEl = document.getElementById('onb-design-paste');
+  if (designPasteEl) {
+    designPasteEl.addEventListener('input', e => { S.onbDesignPaste = e.target.value; render(); });
+  }
+  const designFileEl = document.getElementById('onb-design-file');
+  if (designFileEl) {
+    designFileEl.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => { S.onbDesignPaste = ev.target.result; render(); };
+      reader.readAsText(file);
+    });
+  }
+  // (design URL input removed — replaced with M3/AntX selection)
+
+  // Other materials — multiple file upload in step 3
+  const extrasFileEl = document.getElementById('onb-extras-file');
+  if (extrasFileEl) {
+    extrasFileEl.addEventListener('change', e => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+      if (!S.onbExtras) S.onbExtras = [];
+      let pending = files.length;
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          S.onbExtras.push({ name: file.name.replace(/\.[^.]+$/, ''), content: ev.target.result });
+          pending--;
+          if (pending === 0) render();
+        };
+        reader.readAsText(file);
+      });
+      e.target.value = ''; // reset so same file can be re-added after removal
+    });
+  }
+
+  // Persona name input — live sync without re-render
+  const personaNameEl = document.getElementById('persona-name-input');
+  if (personaNameEl) {
+    personaNameEl.addEventListener('input', e => {
+      if (!S.personaNames) S.personaNames = {};
+      S.personaNames[S.persona] = e.target.value;
+    });
+  }
+
+  // Persona textarea — live sync without re-render; mark dirty so scenario clicks don't auto-generate
+  const personaTextareaEl = document.getElementById('persona-textarea');
+  if (personaTextareaEl) {
+    personaTextareaEl.addEventListener('input', e => {
+      if (S.personaTexts) S.personaTexts[S.persona] = e.target.value;
+      S.personaDirty = true;
+    });
+  }
+
+  // Scenario editor — label inputs, live sync without re-render
+  document.querySelectorAll('.scenario-label-input').forEach(el => {
+    el.addEventListener('input', e => {
+      const s = S.scenarios.find(x => x.id === e.target.dataset.sid);
+      if (s) s.label = e.target.value;
+    });
+  });
+  // Scenario editor — condition textareas, live sync without re-render
+  document.querySelectorAll('.scenario-condition-input').forEach(el => {
+    el.addEventListener('input', e => {
+      const s = S.scenarios.find(x => x.id === e.target.dataset.sid);
+      if (s) s.condition = e.target.value;
+    });
+  });
+  // Scenario category select — re-render since badge colour changes
+  document.querySelectorAll('select[data-action="set-scenario-cat"]').forEach(el => {
+    el.addEventListener('change', e => {
+      const s = S.scenarios.find(x => x.id === e.target.dataset.sid);
+      if (s) { s.category = e.target.value; render(); }
+    });
+  });
+
+  // Direct bubble editing — contenteditable bindings
+  document.querySelectorAll('.bubble-editable').forEach(el => {
+    el.addEventListener('focus', () => {
+      // Switch from rendered HTML to raw markdown so user edits ** syntax
+      const raw = el.dataset.raw !== undefined ? el.dataset.raw : el.innerText;
+      el.innerHTML = esc(raw);
+      // Place cursor at end
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); el.blur(); }
+    });
+    el.addEventListener('blur', () => {
+      // Element was detached by a render() call mid-generation — ignore phantom blur
+      if (!document.contains(el)) return;
+      const key = el.dataset.key;
+      const idx = parseInt(el.dataset.idx);
+      const field = el.dataset.field;
+      const turns = S.generatedConvos[key];
+      if (!turns || !turns[idx]) return;
+      const newText = el.innerText.replace(/\n$/, ''); // strip trailing newline browsers add to contenteditable
+      let changed = false;
+      if (field === 'text' && turns[idx].text !== newText) {
+        turns[idx].text = newText; changed = true;
+      } else if (field === 'bubble') {
+        const bidx = parseInt(el.dataset.bidx);
+        if (turns[idx].bubbles && turns[idx].bubbles[bidx] !== newText) {
+          turns[idx].bubbles[bidx] = newText; changed = true;
+        }
+      }
+      if (changed) { pushConvoHistory(key); render(); } else { render(); }
+    });
+  });
+
+  // Component field editing — contenteditable bindings
+  document.querySelectorAll('.comp-editable').forEach(el => {
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); el.blur(); }
+    });
+    el.addEventListener('blur', () => {
+      if (!document.contains(el)) return;
+      const { key, idx, slot, field } = el.dataset;
+      const turns = S.generatedConvos[key];
+      if (!turns || !turns[parseInt(idx)]) return;
+      const comp = turns[parseInt(idx)][slot];
+      if (!comp) return;
+      const val = el.innerText.replace(/\n$/, '');
+      if (field === 'row-value') {
+        const ri = parseInt(el.dataset.ridx);
+        if (comp.rows && comp.rows[ri]) comp.rows[ri].value = val;
+      } else if (field === 'opt-label' || field === 'opt-desc') {
+        const oi = parseInt(el.dataset.oidx);
+        const subfield = field === 'opt-label' ? 'label' : 'desc';
+        if (comp.options && comp.options[oi]) comp.options[oi][subfield] = val;
+      } else {
+        comp[field] = val;
+      }
+      pushConvoHistory(key);
+      render();
+    });
+  });
+
+  // Persona dropdown
+  const personaDropEl = document.getElementById('persona-dropdown');
+  if (personaDropEl) {
+    personaDropEl.addEventListener('change', e => {
+      handleAction('set-persona', {persona: e.target.value});
+    });
+  }
+
+  // File upload — helper that reads an .md/.txt file into a target textarea
+  function wireFileUpload(inputId, targetId, nameId) {
+    const fileEl = document.getElementById(inputId);
+    if (!fileEl) return;
+    fileEl.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        const content = evt.target.result;
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.value = content;
+          target.dispatchEvent(new Event('input')); // trigger live-sync listeners
+        }
+        if (nameId) {
+          const nameEl = document.getElementById(nameId);
+          if (nameEl && !nameEl.value.trim()) {
+            // Auto-populate name from filename, strip extension and dashes
+            nameEl.value = file.name.replace(/\.(md|txt)$/i, '').replace(/[-_]/g, ' ');
+          }
+        }
+      };
+      reader.readAsText(file);
+      fileEl.value = ''; // reset so same file can be re-uploaded
+    });
+  }
+  wireFileUpload('mat-file-upload-new', 'mat-new-content', 'mat-new-name');
+
+  // Load session — file input inside export panel
+  const loadSessionEl = document.getElementById('load-session-input');
+  if (loadSessionEl) {
+    loadSessionEl.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const saved = JSON.parse(ev.target.result);
+          if (!saved.version || !saved.scenarios) {
+            alert('This doesn\'t look like a valid session file.');
+            return;
+          }
+          if (!confirm('Load this session? Your current design will be replaced.')) return;
+          // Write to localStorage so loadState() can pick it up, then reload
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...saved, version: STATE_VERSION }));
+          location.reload();
+        } catch(err) {
+          alert('Could not read the session file. Make sure it\'s a valid .json file.');
+        }
+      };
+      reader.readAsText(file);
+      loadSessionEl.value = '';
+    });
+  }
+
+  // Live-sync KB textareas (materials panel)
+  const matNewContent = document.getElementById('mat-new-content');
+  if (matNewContent) matNewContent.addEventListener('input', e => { /* value read on save */ });
+
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT — one-time setup, then first render
+// ═══════════════════════════════════════════════════════════════
+function init() {
+  // Delegated click handler — attached ONCE to #app, survives innerHTML rewrites
+  document.getElementById('app').addEventListener('click', e => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    handleAction(el.dataset.action, el.dataset);
+  });
+  // Restore previous session if available; fall back to fresh start
+  const restored = loadState();
+  if (restored && S.step === 3 && S.selectedScenario) {
+    // Resume generation for any conversations not yet completed
+    generateAll(S.scenarios, S.persona);
+  } else if (!restored) {
+    // Fresh start — nothing to do, render will show onboarding
+  }
+  render();
+}
+
+function handleAction(action, data={}) {
+  switch(action) {
+    case 'generate':
+      if (S.intent.trim()) generateScenarios(S.intent.trim());
+      break;
+
+    case 'use-example':
+      S.intent = data.text || '';
+      generateScenarios(S.intent);
+      break;
+
+    case 'pick-intent': {
+      // Fill the field but don't generate — wait for user to click CTA
+      S.intent = data.text || '';
+      render();
+      // Focus and scroll the main canvas textarea into view
+      setTimeout(() => {
+        const el = document.getElementById('intent-input-main') || document.getElementById('intent-input');
+        if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+      }, 30);
+      break;
+    }
+
+    case 'see-example': {
+      const ex = S.domainIntents || EXAMPLE_INTENTS;
+      S.intent = (ex[2] || ex[0] || EXAMPLE_INTENTS[0]).text;
+      generateScenarios(S.intent);
+      break;
+    }
+
+    case 'focus-intent': {
+      const el = document.getElementById('intent-input');
+      if (el) el.focus();
+      break;
+    }
+
+    case 'select-scenario': {
+      const s = S.scenarios.find(x => x.id === data.sid);
+      if (!s) break;
+      S.selectedScenario = s;
+      if (S.step === 2) {
+        render();
+      } else {
+        S.step = 3;
+        render();
+        // Don't auto-generate if persona has been changed but not saved yet
+        if (!S.personaDirty) generateAll(S.scenarios, S.persona);
+      }
+      break;
+    }
+
+    case 'goto-step': {
+      const n = parseInt(data.step);
+      if (n === 1) { S.step = 1; render(); }
+      else if (n === 2 && S.scenarios.length > 0) { S.step = 2; render(); }
+      else if (n === 3 && S.scenarios.length > 0) {
+        if (!S.selectedScenario) S.selectedScenario = S.scenarios[0];
+        S.step = 3;
+        render();
+        const key = S.selectedScenario.id + '-' + S.persona;
+        generateAll(S.scenarios, S.persona);
+      }
+      break;
+    }
+
+    case 'generate-responses': {
+      S.coverageDismissed = true;
+      // Sync any remaining DOM input values to state before navigating
+      document.querySelectorAll('.scenario-label-input').forEach(el => {
+        const s = S.scenarios.find(x => x.id === el.dataset.sid);
+        if (s) s.label = el.value;
+      });
+      document.querySelectorAll('.scenario-condition-input').forEach(el => {
+        const s = S.scenarios.find(x => x.id === el.dataset.sid);
+        if (s) s.condition = el.value;
+      });
+      if (S.scenarios.length === 0) break;
+      if (!S.selectedScenario || !S.scenarios.find(x => x.id === S.selectedScenario.id)) {
+        S.selectedScenario = S.scenarios[0];
+      }
+      S.step = 3;
+      render();
+      const key = S.selectedScenario.id + '-' + S.persona;
+      generateAll(S.scenarios, S.persona);
+      break;
+    }
+
+    case 'delete-scenario': {
+      S.scenarios = S.scenarios.filter(x => x.id !== data.sid);
+      if (S.selectedScenario && S.selectedScenario.id === data.sid) S.selectedScenario = null;
+      render();
+      break;
+    }
+
+    case 'add-scenario': {
+      const newId = (function(){
+        const maxN = S.scenarios.reduce((m,s)=>{const n=parseInt(s.id.replace(/^S/,''));return isNaN(n)?m:Math.max(m,n);},0);
+        return 'S'+(maxN+1);
+      })();
+      S.scenarios.push({
+        id: newId,
+        label: 'New scenario',
+        category: 'Edge case',
+        condition: 'IF ...'
+      });
+      render();
+      setTimeout(() => {
+        const newInput = document.querySelector('.scenario-label-input[data-sid="'+newId+'"]');
+        if (newInput) { newInput.focus(); newInput.select(); }
+      }, 40);
+      break;
+    }
+
+    case 'save-persona': {
+      // personaTexts already live-synced via textarea input listener
+      // Clear all cached conversations for this persona so they regenerate fresh
+      Object.keys(S.generatedConvos).forEach(k => {
+        if (k.endsWith('-' + S.persona)) delete S.generatedConvos[k];
+      });
+      S.personaDirty = false;
+      S.personaSaveToast = true;
+      // Pre-populate awaiting keys so spinners show immediately on render
+      S.awaitingRegenKeys = new Set(S.scenarios.map(s => s.id + '-' + S.persona));
+      render();
+      generateAll(S.scenarios, S.persona);
+      setTimeout(() => { S.personaSaveToast = false; render(); }, 2400);
+      break;
+    }
+
+    case 'toggle-persona':
+      S.personaOpen = !S.personaOpen;
+      render();
+      break;
+
+    case 'set-persona': {
+      S.persona = data.persona;
+      S.personaDirty = true;
+      render();
+      break;
+    }
+
+    case 'apply-tweak':
+      if (S.tweak.trim() && S.selectedScenario) applyTweak(S.tweak);
+      break;
+
+    case 'keep-rule-all':
+      if (S.capturedRule) { S.learnedRules = [...S.learnedRules, S.capturedRule]; S.capturedRule = null; render(); }
+      break;
+    case 'keep-rule-scenario':
+      if (S.capturedRule && S.selectedScenario) {
+        const sid = S.selectedScenario.id;
+        S.scenarioRules = { ...S.scenarioRules, [sid]: [...(S.scenarioRules[sid] || []), S.capturedRule] };
+        S.capturedRule = null; render();
+      }
+      break;
+    case 'discard-rule':
+      S.capturedRule = null; render();
+      break;
+    case 'remove-rule':
+      S.learnedRules = S.learnedRules.filter((_,i) => i !== parseInt(data.idx));
+      render();
+      break;
+    case 'remove-scenario-rule': {
+      const sid = data.sid; const ridx = parseInt(data.idx);
+      if (S.scenarioRules && S.scenarioRules[sid]) {
+        const updated = S.scenarioRules[sid].filter((_,i) => i !== ridx);
+        S.scenarioRules = { ...S.scenarioRules, [sid]: updated };
+        render();
+      }
+      break;
+    }
+
+    case 'add-empty-state':
+      S.scenarios = [...S.scenarios, {
+        id: (function(){const maxN=S.scenarios.reduce((m,s)=>{const n=parseInt(s.id.replace(/^S/,''));return isNaN(n)?m:Math.max(m,n);},0);return 'S'+(maxN+1);})(),
+        label: 'No results found',
+        category: 'Empty state',
+        condition: 'IF authenticated but no data exists for this intent',
+      }];
+      S.coverageDismissed = true;
+      render();
+      break;
+
+    case 'dismiss-coverage':
+      S.coverageDismissed = true;
+      render();
+      break;
+
+    case 'show-materials':
+      S.showMaterials = true;
+      render();
+      break;
+    case 'noop':
+      break;
+
+    case 'close-materials':
+      S.showMaterials = false;
+      S.replacingMat = null;
+      render();
+      break;
+
+    case 'replace-mat':
+      S.replacingMat = data.id;
+      S.showAddMaterial = false;
+      render();
+      setTimeout(() => {
+        wireFileUpload('replace-mat-file', 'replace-mat-content', null);
+        const nameEl = document.getElementById('replace-mat-name');
+        if (nameEl) nameEl.focus();
+      }, 20);
+      break;
+
+    case 'cancel-replace-mat':
+      S.replacingMat = null;
+      render();
+      break;
+
+    case 'confirm-replace-mat': {
+      const mat = S.materials.find(m => m.id === data.id);
+      if (mat) {
+        const nameEl  = document.getElementById('replace-mat-name');
+        const contEl  = document.getElementById('replace-mat-content');
+        const newName = nameEl ? nameEl.value.trim() : mat.name;
+        const newCont = contEl ? contEl.value.trim() : mat.content;
+        if (newCont) {
+          mat.name    = newName || mat.name;
+          mat.content = newCont;
+          mat.parsed  = false;
+          mat.scenarioContext     = '';
+          mat.conversationContext = '';
+          S.replacingMat = null;
+          render();
+          parseMaterial(mat);
+        } else {
+          if (contEl) contEl.style.borderColor = 'var(--status-high)';
+        }
+      }
+      break;
+    }
+
+    case 'remove-mat': {
+      const mat = S.materials.find(m => m.id === data.id);
+      if (mat) {
+        mat.removed = true; // always keep in list so user can re-add from Not applied
+      }
+      S.replacingMat = null;
+      if (S.previewMatId === data.id) S.previewMatId = null;
+      render();
+      break;
+    }
+
+    case 'add-back-mat': {
+      const mat = S.materials.find(m => m.id === data.id);
+      if (mat) {
+        if (mat.id.startsWith('mat-design')) {
+          // Deactivate the current DS material
+          S.materials.filter(m => m.id.startsWith('mat-design') && m.id !== mat.id)
+            .forEach(m => { m.removed = true; });
+          // Stage the new DS key — applied to S.onbDesign only on Apply / Apply+Regen
+          // so the phone sim theme doesn't change until the user explicitly commits.
+          const DS_ID_MAP = { 'mat-design-m3':'m3', 'mat-design-antx':'antx' };
+          const newKey = mat.dsKey || DS_ID_MAP[mat.id];
+          if (newKey && newKey !== 'custom') S.pendingOnbDesign = newKey;
+        }
+        mat.removed = false;
+        if (!mat.parsed && !mat.parsing) parseMaterial(mat);
+        render();
+      }
+      break;
+    }
+
+    case 'show-add-material':
+      S.showAddMaterial = true;
+      S.replacingMat = null;
+      render();
+      setTimeout(() => {
+        const el = document.getElementById('mat-new-name');
+        if (el) el.focus();
+      }, 20);
+      break;
+
+    case 'cancel-add-material':
+      S.showAddMaterial = false;
+      render();
+      break;
+
+    case 'save-custom-material': {
+      const nameEl = document.getElementById('mat-new-name');
+      const contentEl = document.getElementById('mat-new-content');
+      const name = nameEl ? nameEl.value.trim() : '';
+      const content = contentEl ? contentEl.value.trim() : '';
+      if (name && content) {
+        const newMat = { id: 'mat-' + Date.now(), name, content, parsing: false, parsed: false, scenarioContext: '', conversationContext: '' };
+        S.materials = [...S.materials, newMat];
+        S.showAddMaterial = false;
+        render();
+        parseMaterial(newMat);
+      } else {
+        // Shake the empty field
+        if (nameEl && !name) nameEl.style.borderColor = 'var(--status-high)';
+        if (contentEl && !content) contentEl.style.borderColor = 'var(--status-high)';
+      }
+      break;
+    }
+
+    case 'preview-mat':
+      S.previewMatId = S.previewMatId === data.id ? null : data.id;
+      render();
+      break;
+
+    case 'apply-and-regen':
+      S.showMaterials = false;
+      S.replacingMat = null;
+      S.showAddMaterial = false;
+      // Apply the staged DS theme now — was written in add-back-mat but deferred until here
+      // so the phone sim only updates when the user explicitly commits via Apply / Apply+Regen.
+      if (S.pendingOnbDesign) {
+        S.onbDesign = S.pendingOnbDesign;
+        S.pendingOnbDesign = null;
+      }
+      if (S.step === 3 && S.scenarios.length > 0) {
+        // Clear cached conversations and in-progress keys
+        Object.keys(S.generatedConvos).forEach(k => delete S.generatedConvos[k]);
+        S.generatingKeys.clear();
+        S.awaitingRegenKeys = new Set(S.scenarios.map(s => s.id + '-' + S.persona));
+        render();
+        generateAll(S.scenarios, S.persona);
+      } else {
+        render();
+      }
+      break;
+
+    case 'toggle-copy':
+      S.showCopyChooser = !S.showCopyChooser;
+      render();
+      break;
+
+    case 'new-session':
+      if (confirm('Start a new session? Your current design will be cleared.')) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+      break;
+
+    case 'save-session': {
+      S.savingSession = true;
+      render();
+      // Brief delay so the "Saving…" label is visible before the download dialog opens
+      setTimeout(() => {
+        const snapshot = {
+          version: STATE_VERSION,
+          step: S.step, onbStep: S.onbStep, onbDomain: S.onbDomain,
+          onbGuidelines: S.onbGuidelines, onbGuidelinesPaste: S.onbGuidelinesPaste, onbExtras: S.onbExtras || [],
+          onbDesign: S.onbDesign, onbDesignUrl: S.onbDesignUrl,
+          onbScenarios: S.onbScenarios,
+          materials: S.materials.map(m => ({
+            id: m.id, name: m.name, content: m.content, isDefault: m.isDefault,
+            removed: m.removed, parsed: m.parsed,
+            scenarioContext: m.scenarioContext, conversationContext: m.conversationContext,
+          })),
+          intent: S.intent, submittedIntent: S.submittedIntent,
+          scenarios: S.scenarios, selectedScenario: S.selectedScenario,
+          persona: S.persona, personaOpen: S.personaOpen,
+          generatedConvos: S.generatedConvos,
+          learnedRules: S.learnedRules,
+          coverageDismissed: S.coverageDismissed,
+          personaTexts: S.personaTexts, personaNames: S.personaNames,
+          exportScope: S.exportScope, exportSections: S.exportSections,
+          savedAt: new Date().toISOString(),
+        };
+        const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const intentSlug = (S.submittedIntent || 'session').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
+        a.href = url; a.download = 'chatbot-session-' + intentSlug + '.json';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        S.savingSession = false;
+        render();
+      }, 120);
+      break;
+    }
+
+    case 'open-export':
+      S.showExportPanel = true;
+      render();
+      break;
+
+    case 'close-export':
+      S.showExportPanel = false;
+      render();
+      break;
+
+    case 'toggle-export-section':
+      if (!S.exportSections) S.exportSections = { conversation: true, spec: true, map: false, rules: false };
+      S.exportSections[data.key] = !S.exportSections[data.key];
+      render();
+      break;
+
+    case 'set-export-scope':
+      S.exportScope = data.scope || 'selected';
+      render();
+      break;
+
+    case 'set-export-format':
+      S.exportFormat = data.fmt || 'html';
+      render();
+      break;
+
+    case 'do-export': {
+      const isJSONL = S.exportFormat === 'jsonl';
+      const intentSlug = (S.submittedIntent || 'design').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+      const content = isJSONL ? buildExportJSONL() : buildExportHTML(S.exportScope, S.exportSections);
+      const mimeType = isJSONL ? 'application/jsonl' : 'text/html';
+      const ext = isJSONL ? '.jsonl' : '.html';
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'chatbot-design-' + intentSlug + ext;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      S.showExportPanel = false;
+      render();
+      break;
+    }
+
+    case 'do-copy': {
+      const sel = S.selectedScenario;
+      const key = sel ? (sel.id+'-'+S.persona) : null;
+      const turns = key ? (S.generatedConvos[key]||[]) : [];
+      const personaText = (S.personaTexts && S.personaTexts[S.persona]) || (currentPersonas()[S.persona] || {}).text || '';
+      const lines = [
+        '═══════════════════════════════════════',
+        'BOT TRAINING SPEC',
+        '═══════════════════════════════════════',
+        '',
+        'INTENT',
+        S.submittedIntent,
+        '',
+        'SCENARIO   ' + (sel ? sel.id + ' — ' + sel.label : '(none selected)'),
+        'CATEGORY   ' + (sel ? sel.category : ''),
+        'CONDITION  ' + (sel ? sel.condition : ''),
+        '',
+        'BOT PERSONA',
+        personaText,
+        '',
+      ];
+      if (turns.length > 0) {
+        lines.push('IDEAL CONVERSATION', '───────────────────');
+        turns.forEach(t => {
+          if (t.type === 'user') {
+            lines.push('User:  ' + (t.text || ''));
+          } else {
+            (t.bubbles || []).forEach(b => lines.push('Bot:   ' + b));
+            if (t.component) lines.push('Card:  [' + t.component.type + ']');
+            if (t.quickReplies && t.quickReplies.length) lines.push('CTAs:  ' + t.quickReplies.join(' · '));
+          }
+        });
+        lines.push('───────────────────', '');
+      }
+      lines.push('ALL SCENARIOS');
+      S.scenarios.forEach(s => lines.push('  ' + s.id + ' [' + s.category + ']  ' + s.label, '     IF: ' + s.condition));
+      const text = lines.join('\n');
+      const _doCopy = txt => {
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:absolute;left:-9999px;top:-9999px;font-size:12pt';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      };
+      _doCopy(text);
+      S.copyDone = true;
+      render();
+      setTimeout(() => { S.copyDone = false; render(); }, 2000);
+      break;
+    }
+
+    case 'retry-conv':
+      S.convError = null;
+      if (S.selectedScenario) generateConversation(S.selectedScenario, S.persona);
+      break;
+
+    case 'undo-conv': {
+      const key = data.sid + '-' + S.persona;
+      const hist = S.convoHistory[key] || [];
+      const idx = S.convoHistoryIdx[key] ?? hist.length - 1;
+      if (idx > 0) {
+        S.convoHistoryIdx[key] = idx - 1;
+        S.generatedConvos[key] = cloneConvo(hist[idx - 1]);
+        render();
+      }
+      break;
+    }
+    case 'redo-conv': {
+      const key = data.sid + '-' + S.persona;
+      const hist = S.convoHistory[key] || [];
+      const idx = S.convoHistoryIdx[key] ?? hist.length - 1;
+      if (idx < hist.length - 1) {
+        S.convoHistoryIdx[key] = idx + 1;
+        S.generatedConvos[key] = cloneConvo(hist[idx + 1]);
+        render();
+      }
+      break;
+    }
+    case 'remove-bubble': {
+      const key = data.key;
+      const idx = parseInt(data.idx);
+      const bidx = parseInt(data.bidx);
+      const turns = S.generatedConvos[key];
+      if (!turns || !turns[idx]) break;
+      const turn = turns[idx];
+      if (turn.type === 'user') {
+        // Remove the whole user turn
+        S.generatedConvos[key] = turns.filter((_, i) => i !== idx);
+      } else {
+        turn.bubbles = (turn.bubbles || []).filter((_, i) => i !== bidx);
+        // Auto-remove turn if now completely empty
+        const isEmpty = !turn.bubbles.length && !turn.component && !turn.component2 && !(turn.quickReplies && turn.quickReplies.length);
+        if (isEmpty) S.generatedConvos[key] = turns.filter((_, i) => i !== idx);
+      }
+      pushConvoHistory(key);
+      render();
+      break;
+    }
+    case 'remove-component': {
+      const key = data.key;
+      const idx = parseInt(data.idx);
+      const slot = data.slot; // 'component' or 'component2'
+      const turns = S.generatedConvos[key];
+      if (!turns || !turns[idx]) break;
+      turns[idx][slot] = null;
+      // Auto-remove turn if now completely empty
+      const t = turns[idx];
+      const isEmpty = !(t.bubbles && t.bubbles.length) && !t.component && !t.component2 && !(t.quickReplies && t.quickReplies.length);
+      if (isEmpty) S.generatedConvos[key] = turns.filter((_, i) => i !== idx);
+      pushConvoHistory(key);
+      render();
+      break;
+    }
+
+    // Onboarding
+    case 'onb-next':
+      if (S.onbStep === 0) {
+        if (!['m3','antx','custom','none'].includes(S.onbDesign)) S.onbDesign = 'm3';
+        initDomain(); // early fire — latency hidden behind onboarding steps 1+2
+      }
+      if (S.onbStep < 2) { S.onbStep++; render(); }
+      else { S.step = 1; render(); initDomain(); initMaterials(); } // initMaterials here ensures full paste content is captured
+      break;
+    case 'onb-back':
+      if (S.onbStep > 0) { S.onbStep--; render(); }
+      break;
+    case 'skip-onb': {
+      if (!['m3','antx','custom','none'].includes(S.onbDesign)) S.onbDesign = 'm3';
+      S.step = 1;
+      render();
+      initMaterials(); // always fires at onboarding exit with complete state
+      break;
+    }
+    case 'set-onb-guidelines':
+      S.onbGuidelines = data.val;
+      render();
+      break;
+    case 'remove-onb-extra': {
+      const idx = parseInt(data.idx);
+      if (S.onbExtras && S.onbExtras[idx] !== undefined) {
+        S.onbExtras.splice(idx, 1);
+        render();
+      }
+      break;
+    }
+    case 'set-onb-design':
+      S.onbDesign = data.val;
+      render();
+      break;
+  }
+}
+
+init();;
+</script>
+</body>
+</html>
+

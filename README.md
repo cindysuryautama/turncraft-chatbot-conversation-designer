@@ -3,7 +3,6 @@
 An AI-powered tool for designing governed chatbot conversations. Enter a user intent → map the full scenario space → generate phone-sim responses with your design system and guidelines baked in.
 
 Built as a Claude artifact. Runs in [Cowork](https://claude.ai/download), Anthropic's desktop app.
-
 ---
 
 ## What it does
@@ -19,7 +18,7 @@ Built as a Claude artifact. Runs in [Cowork](https://claude.ai/download), Anthro
 ## How to use
 
 1. Download and install [Cowork](https://claude.ai/download) (free, requires a Claude account).
-2. Open Cowork, drag and drop `turncraft-chatbot-conversation-designer.html` into the chat (example prompt: "run this tool as an artifact"). Opening the .html file directly in your web browser will not work.
+2. Open Cowork, drag and drop `turncraft-chatbot-conversation-designer.html` into the chat (example prompt: "run this tool as an artifact"). **Opening the .html file directly in your web browser will not work.**
 3. Follow the onboarding — choose your domain, upload or use the built-in materials.
 4. Enter a user intent and start designing.
 

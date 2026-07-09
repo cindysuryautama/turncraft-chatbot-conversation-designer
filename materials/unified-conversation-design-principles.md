@@ -209,13 +209,19 @@ Resolve blockers in this sequence before showing the primary CTA:
 4. Rate / Availability
 5. Confirmation
 
+Authentication and KYC/Verification describe a user progressing toward meeting requirements — resolve them in order, same as Balance and Rate. A suspended or flagged account is not a stage in this sequence; it's an exception. Route it directly to the Account Restrictions rule (see Support flows) instead of treating it as incomplete verification.
+
 Never show a rate lock or pricing card to a user whose balance is insufficient to execute it.
 
 ### Trading flows
 - Lead with the number — rate, amount, fee — before any explanation.
+- If no rate is available, lead with the blocker instead of the rate.
 - Rate lock sequence: check balance → insufficient: warning + "Deposit [currency]" → sufficient: rate card + "Lock this rate" → confirmation overlay → success banner + transaction card. Never skip confirmation.
+- When a Trading flow state has no explicit remedy defined (e.g. a limit reached, a pending action, an unavailable instrument), the bot may suggest context in its message, but the CTA must resolve to a concrete, always-available action — most often viewing or managing the user's existing state. Never end a turn without an actionable next step. Where a relevant record (a lock, an order, a transaction) already exists, render it as a card with its own actions (e.g. "Cancel", "Complete") rather than collapsing everything into one generic CTA.
+- Where no existing record can anchor the CTA (e.g. the instrument itself is unavailable), prioritize an action that continues the user's original goal over one that redirects them to a different goal. If continuing the goal depends on a capability that isn't confirmed elsewhere in the materials, offer it as a soft, low-commitment gesture rather than a guaranteed mechanism ("Want us to flag you when it's back?" rather than "We'll notify you"). Only fall back to a plain redirect if no honest intent-continuing option exists, and frame it as a detour while the original request stays open, not a replacement for it.
 - Never speculate on price movements. State the current rate only.
 - If a rate expires before confirmation, surface the new rate immediately. Don't apologise — just show the new rate.
+- If a user abandons or cancels before confirming — as opposed to the rate itself expiring — don't stay silent. Acknowledge what happened and invite them to start again. Never leave a user action unaddressed.
 - Always show fees in the confirmation step. Never hide fees.
 
 ### Support flows

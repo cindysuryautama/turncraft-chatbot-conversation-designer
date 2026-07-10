@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turncraft — Prompt Eval Log</title>
+<style>
+  :root{
+    --ink:#22201d;
+    --paper:#faf6f0;
+    --paper-raised:#ffffff;
+    --line:#e4dcd0;
+    --rust:#b5533c;
+    --rust-dim:#f3e3dd;
+    --olive:#6b7a4f;
+    --olive-dim:#e9eddf;
+    --amber:#c8912e;
+    --amber-dim:#f6ecd6;
+    --muted:#7a7368;
+    --mono:'SF Mono', 'Menlo', 'Consolas', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.5;
+    padding:0 0 80px;
+  }
+  header.top{
+    padding:40px 24px 28px;
+    max-width:960px;
+    margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--rust);
+    font-weight:600;
+    margin:0 0 10px;
+  }
+  h1{
+    font-size:28px;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:15px;
+    margin:0;
+    max-width:640px;
+  }
+  .intro{
+    max-width:680px;
+    margin-top:16px;
+  }
+  .intro p{
+    font-size:15px;
+    line-height:1.65;
+    color:#3a352e;
+    margin:0 0 14px;
+  }
+  .intro p:last-child{margin-bottom:0;}
+  .intro a{color:var(--rust); font-weight:600; text-decoration:none;}
+  .intro a:hover{text-decoration:underline;}
+  main{
+    max-width:960px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+  .version-tabs{
+    display:flex;
+    gap:8px;
+    margin:28px 0 0;
+    border-bottom:1px solid var(--line);
+  }
+  .version-tab{
+    font-size:14px;
+    font-weight:600;
+    padding:10px 16px;
+    border:none;
+    background:none;
+    cursor:pointer;
+    color:var(--muted);
+    border-bottom:2px solid transparent;
+    margin-bottom:-1px;
+  }
+  .version-tab.active{
+    color:var(--rust);
+    border-bottom-color:var(--rust);
+  }
+  .version-panel{display:none;}
+  .version-panel.active{display:block;}
+  .section-nav{
+    display:flex;
+    gap:6px;
+    margin:24px 0 20px;
+  }
+  .section-btn{
+    font-size:13px;
+    font-weight:600;
+    padding:7px 14px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:var(--paper-raised);
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .section-btn.active{
+    background:var(--ink);
+    color:var(--paper);
+    border-color:var(--ink);
+  }
+  .section-view{display:none;}
+  .section-view.active{display:block;}
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 22px;
+    margin-bottom:16px;
+  }
+  .card h3{
+    margin:0 0 10px;
+    font-size:15px;
+  }
+  .card p{margin:0 0 8px; font-size:14px; color:#4a463f;}
+  .card p:last-child{margin-bottom:0;}
+  .meta-row{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .meta-row a{color:var(--rust); text-decoration:none; font-weight:600;}
+  .meta-row a:hover{text-decoration:underline;}
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+  }
+  th,td{
+    text-align:left;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+    vertical-align:top;
+  }
+  th{
+    background:#f2ede3;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--muted);
+  }
+  tr:last-child td{border-bottom:none;}
+  .tag{
+    display:inline-block;
+    font-size:11.5px;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:999px;
+  }
+  .tag.pass{background:var(--olive-dim); color:#4a5a34;}
+  .tag.weak{background:var(--amber-dim); color:#8a611c;}
+  .tag.fail{background:var(--rust-dim); color:var(--rust);}
+  .stat-row{
+    display:flex;
+    gap:12px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+  .stat{
+    flex:1;
+    min-width:140px;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 16px;
+  }
+  .stat .num{font-size:22px; font-weight:700;}
+  .stat.pass .num{color:#4a5a34;}
+  .stat.weak .num{color:#8a611c;}
+  .stat.fail .num{color:var(--rust);}
+  .stat .label{font-size:12px; color:var(--muted); margin-top:2px;}
+  .expand-btn{
+    font-size:12px;
+    font-weight:600;
+    color:var(--rust);
+    background:none;
+    border:1px solid var(--rust-dim);
+    padding:4px 10px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .run-detail{display:none;}
+  .run-detail.open{display:table-row;}
+  .run-detail td{
+    background:#f8f4ec;
+    padding:16px 18px;
+  }
+  .run-block{margin-bottom:12px;}
+  .run-block:last-child{margin-bottom:0;}
+  .run-label{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .run-text{
+    font-family:var(--mono);
+    font-size:12.5px;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:10px 12px;
+    white-space:pre-wrap;
+  }
+  .criteria-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:6px;
+    margin-top:10px;
+    font-size:12.5px;
+  }
+  .criteria-grid div{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:6px 9px;
+  }
+  h2.section-title{
+    font-size:16px;
+    margin:28px 0 12px;
+  }
+  h2.section-title:first-child{margin-top:0;}
+  .rootcause-card .fix{
+    margin-top:10px;
+    padding:10px 12px;
+    background:var(--olive-dim);
+    border-radius:6px;
+    font-size:13.5px;
+    color:#3f4a2d;
+  }
+  .rootcause-card .fix b{color:#2e3620;}
+  .scenario-list{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin:8px 0;
+  }
+  .scenario-chip{
+    font-size:12px;
+    font-family:var(--mono);
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:2px 7px;
+  }
+  footer{
+    max-width:960px;
+    margin:40px auto 0;
+    padding:16px 24px 0;
+    border-top:1px solid var(--line);
+    font-size:12.5px;
+    color:var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <p class="eyebrow">Turncraft · Prompt Eval Log</p>
+  <h1>Conversation Guidelines — Rate Lock — Eval Log</h1>
+  <div class="intro">
+    <p><a href="https://github.com/cindysuryautama/turncraft-chatbot-conversation-designer" target="_blank" rel="noopener">Turncraft</a> is a tool I built to design governed chatbot conversations: give it a user intent, and it maps the full scenario space. It then generates responses that follow a team's conversation guidelines and design system.</p>
+    <p>This prompt evaluation log documents what happened when I put the conversation guidelines under the same scrutiny the tool is meant to bring to a chatbot. It's built on a fixed set of test cases, a pre-defined scoring rubric, and repeat runs to tell a real pattern from a coincidence.</p>
+    <p>When a run fails, I trace why the guidelines allowed it, fix that specific gap, and check the fix with cold tests. I picked one scenario cluster, "locking in a preferential rate", on a trading bot in a fintech domain as the worked example. It's deliberately narrow, so the process could be documented all the way through instead of stretched thin across everything the tool can do.</p>
+  </div>
+</header>
+
+<main>
+  <div class="version-tabs" id="versionTabs">
+    <button class="version-tab active" data-version="v1">Guidelines v1</button>
+    <button class="version-tab" data-version="v2">Guidelines v2</button>
+    <button class="version-tab" data-version="v3">Guidelines v3</button>
+  </div>
+
+  <!-- ===================== VERSION: v1 ===================== -->
+  <section class="version-panel active" id="panel-v1">
+
+    <div class="section-nav">
+      <button class="section-btn active" data-section="process">Process</button>
+      <button class="section-btn" data-section="findings">Findings</button>
+      <button class="section-btn" data-section="changelog">Changelog</button>
+    </div>
+
+    <!-- PROCESS -->
+    <div class="section-view active" id="v1-process">
+      <div class="card">
+        <div class="meta-row">
+          <span>Guidelines under test:</span>
+          <a href="https://github.com/cindysuryautama/turncraft-chatbot-conversation-designer/blob/20c663ce0ce110f83f8b35209d212296cf1657b2/materials/unified-conversation-design-principles.md" target="_blank" rel="noopener">unified-conversation-design-principles.md</a>
+          <a href="https://github.com/cindysuryautama/turncraft-chatbot-conversation-designer" target="_blank" rel="noopener">repo →</a>
+        </div>
+        <p>This is the file being engineered and iterated on. The tool's HTML/JS delivery layer is not touched at any point in this process — only the governing guidelines change between versions.</p>
+      </div>
+
+      <h2 class="section-title">Domain and test set</h2>
+      <div class="card">
+        <p><b>Domain:</b> fintech/crypto — Trading Bot persona, "lock in a preferential rate" intent.</p>
+        <p><b>Test set source:</b> <code>fintech-scenarios.md</code> — a private reference bank used to pick concrete scenario inputs for this eval. It is not part of Turncraft's public bundle (the shipped tool is domain-agnostic by default); it exists purely to give this eval realistic, well-specified conditions to test against.</p>
+        <p><b>Scope note:</b> only the scenario conditions (S1–S7) were drawn from <code>fintech-scenarios.md</code>. Its "Bot Personas" descriptions (e.g. "Trading Bot: precise, efficient…") were <b>not</b> used to govern generation or scoring — those aren't part of the file under test, which has no persona concept at all. An earlier pass in this eval did blend them in; caught and corrected before the findings below were finalized. Persona/tone is scored only against what unified-conversation-design-principles.md itself specifies.</p>
+        <p><b>Frozen test set:</b> the Rate Lock scenario group — 7 scenarios covering 1 happy path, 3 error states, and 3 edge cases. Frozen for the full v1 evaluation cycle so every comparison uses identical inputs.</p>
+        <table style="margin-top:10px;">
+          <tr><th>ID</th><th>Scenario</th><th>Category</th></tr>
+          <tr><td>S1</td><td>Rate locked successfully</td><td>Happy path</td></tr>
+          <tr><td>S2</td><td>Insufficient funds for lock</td><td>Error state</td></tr>
+          <tr><td>S3</td><td>Rate lock limit reached</td><td>Edge case</td></tr>
+          <tr><td>S4</td><td>Account not verified or suspended</td><td>Error state</td></tr>
+          <tr><td>S5</td><td>Rate lock already pending</td><td>Edge case</td></tr>
+          <tr><td>S6</td><td>Market closed or illiquid</td><td>Edge case</td></tr>
+          <tr><td>S7</td><td>User cancels before execution</td><td>Edge case</td></tr>
+        </table>
+      </div>
+
+      <h2 class="section-title">Rubric</h2>
+      <div class="card">
+        <p>Written before any output was generated, so scoring isn't influenced by what the model happened to produce.</p>
+        <table style="margin-top:10px;">
+          <tr><th>Criterion</th><th>What it checks</th></tr>
+          <tr><td>Scenario resolution accuracy</td><td>Does the response address this specific scenario's condition, not a generic answer that fits several.</td></tr>
+          <tr><td>Sequence &amp; CTA compliance</td><td>Follows the mandated rate-lock sequence, state-resolution order, and CTA formatting rules.</td></tr>
+          <tr><td>Factual grounding</td><td>No invented rates, deadlines, or capabilities beyond what the scenario and materials actually establish. The hallucination check.</td></tr>
+          <tr><td>Persona &amp; tone adherence</td><td>Scored only against what unified-conversation-design-principles.md itself specifies: the Tone Calibration table (high-stakes/money-movement actions are precise, confirmatory, with added friction before irreversible steps) and the general voice principles (never defensive, never over-apologetic, consistent character across turns).</td></tr>
+          <tr><td>Clarity &amp; closure</td><td>Exactly one next step, no dead ends, clean close.</td></tr>
+        </table>
+      </div>
+
+      <h2 class="section-title">Generation method</h2>
+      <div class="card">
+        <p>Responses were generated directly by reading the guidelines and scenario files and applying them, rather than by operating the deployed HTML artifact. This mirrors Turncraft's own mechanism — the tool's core function is "the model reads the loaded materials and generates the response" — so the same model applying the same materials in a different wrapper is a reasonable proxy, not a shortcut.</p>
+        <p><b>Runs per scenario:</b> 3 (labeled A, B, C), generated independently, to test whether the same input produces consistent output — not just whether one output happens to follow the rules.</p>
+      </div>
+
+      <h2 class="section-title">Known limitations of this pass</h2>
+      <div class="card">
+        <p>Documented rather than left implicit, since that's part of the practice being demonstrated here:</p>
+        <p>— No cross-check against the design-system materials (Material 3 / Ant Design X) for component-level accuracy; component names were checked against the guidelines' own descriptions only.</p>
+        <p>— No visibility into any prompt scaffolding inside the deployed artifact itself beyond the three materials files.</p>
+        <p>— Three runs is enough to detect gross inconsistency, not to establish a statistically stable failure rate.</p>
+      </div>
+    </div>
+
+    <!-- FINDINGS -->
+    <div class="section-view" id="v1-findings">
+
+      <h2 class="section-title">Run results</h2>
+      <p style="font-size:13.5px;color:#4a463f;max-width:680px;margin:-4px 0 16px;">Inconsistency across runs isn't automatically a failure — Turncraft is meant to suggest reasonable responses where nothing is explicitly defined. The distinction that matters: did the runs converge on <i>legitimate</i> variations that a stated principle would align, or did at least one run produce an output that's unacceptable regardless of principle (a dead end, silence, or a rule violation)?</p>
+      <div class="stat-row">
+        <div class="stat pass"><div class="num">2 / 7</div><div class="label">consistent across all 3 runs</div></div>
+        <div class="stat weak"><div class="num">2 / 7</div><div class="label">inconsistent, but resolvable with one added principle</div></div>
+        <div class="stat fail"><div class="num">3 / 7</div><div class="label">at least one run was an outright failure</div></div>
+      </div>
+
+      <table id="findingsTable">
+        <tr><th>ID</th><th>Scenario</th><th>Consistency</th><th>Rubric read-out</th><th></th></tr>
+
+        <tr>
+          <td>S1</td><td>Rate locked successfully</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>5 / 5 pass — minor CTA-wording drift on the confirm step, not a rule violation</td>
+          <td><button class="expand-btn" onclick="toggleRun('r-s1')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r-s1"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">Rate card (1.0002, 3 min window) → "Lock this rate" → confirmation overlay w/ fee → "Confirm lock" → success banner + transaction card.</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">Same structure. Confirm CTA: "Confirm lock".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">Same structure. Confirm CTA drifted to "Lock at this rate" — same button role, different label.</div></div>
+          <div class="criteria-grid">
+            <div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div>
+          </div>
+        </td></tr>
+
+        <tr>
+          <td>S2</td><td>Insufficient funds for lock</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>5 / 5 pass — flagged for root cause C: "lead with the number" has no explicit fallback for a shortfall figure vs. a market rate</td>
+          <td><button class="expand-btn" onclick="toggleRun('r-s2')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r-s2"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You need 500 USDT to lock this rate. Your balance: 320 USDT." → balance warning banner → "Deposit USDT".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">Same framing and CTA.</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">Same framing and CTA.</div></div>
+          <div class="criteria-grid">
+            <div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div>
+          </div>
+        </td></tr>
+
+        <tr>
+          <td>S3</td><td>Rate lock limit reached</td>
+          <td><span class="tag weak">Converges with a principle</span></td>
+          <td>Run A &amp; B are both legitimate — CTA resolves to viewing/managing locks either way. Run C is the actual failure: a dead end.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r-s3')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r-s3"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You've reached your limit of active rate locks for your account tier." → "View active locks". <b>Valid.</b></div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"...You'll need to complete or cancel an existing lock, or upgrade your tier for more capacity." → "Manage rate locks". <b>Valid</b> — the tier-upgrade mention is suggestive color in the message, not the CTA itself, so it doesn't need to be a confirmed capability.</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"Close a lock to open a new one." — no CTA or button provided. <b>Fail</b> — a dead end, the worst outcome of the three.</div></div>
+          <div class="criteria-grid">
+            <div>Resolution accuracy: Weak</div><div>Sequence/CTA: N/A</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Fail</div>
+          </div>
+        </td></tr>
+
+        <tr>
+          <td>S4</td><td>Account not verified or suspended</td>
+          <td><span class="tag fail">Contains failure</span></td>
+          <td>Confirmed: scenario bundles two distinct states. Fix is to split it, each half with one focused CTA — not to pick a "best" run.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r-s4')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r-s4"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">Defaults to KYC-incomplete framing: "Verify your identity to unlock rate locks." → "Complete verification".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">Defaults to suspended/restricted framing: "Your account access is currently restricted." → "Contact support".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">Hedges both cases in one turn with two CTAs ("Complete verification" / "Contact support") — violates the one-focused-action-per-turn rule.</div></div>
+          <div class="criteria-grid">
+            <div>Resolution accuracy: Fail</div><div>Sequence/CTA: Fail</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Weak</div>
+          </div>
+        </td></tr>
+
+        <tr>
+          <td>S5</td><td>Rate lock already pending</td>
+          <td><span class="tag weak">Converges with a principle</span></td>
+          <td>All three runs identify a legitimate action (view, cancel, complete) — the fix isn't picking one, it's showing all of them on a card</td>
+          <td><button class="expand-btn" onclick="toggleRun('r-s5')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r-s5"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You already have a pending rate lock on USDT/USD. Complete or cancel it to start a new one." → "View pending lock".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">Same setup line → "Cancel pending lock".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">Same setup line → "Complete your pending lock".</div></div>
+          <div class="run-block"><div class="run-label">Resolution</div><div class="run-text">None of the three is wrong, and none is complete alone. The user plausibly wants to view first, then cancel or complete — so the fix is a pending-lock card (rate, amount, expiry) with "Cancel" and "Complete" as in-card actions. Rendering the card satisfies "view"; the user decides from there.</div></div>
+          <div class="criteria-grid">
+            <div>Resolution accuracy: Weak</div><div>Sequence/CTA: Weak</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Weak</div>
+          </div>
+        </td></tr>
+
+        <tr>
+          <td>S6</td><td>Market closed or illiquid</td>
+          <td><span class="tag fail">Contains failure</span></td>
+          <td>Run A is the right default. Run B (dead end) is unacceptable regardless of principle. Run C conflates a suggestion with a CTA.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r-s6')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r-s6"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"USDT/USD isn't available for rate lock right now — the market is closed." → "Notify me when available". <b>Right default</b> — the action a blocked user most likely wants first.</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"USDT/USD is currently unavailable. Try again shortly." — no CTA at all, ends on a dead end. <b>Unacceptable</b> — "never end on a failure" is non-negotiable, invention principle or not.</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"USDT/USD is closed right now." → "View other available pairs". <b>Mis-scoped</b> — this is fine as a suggestion inside the message copy, but shouldn't be offered as a competing CTA (one focused action per turn still applies).</div></div>
+          <div class="criteria-grid">
+            <div>Resolution accuracy: Fail</div><div>Sequence/CTA: Fail</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Fail</div>
+          </div>
+        </td></tr>
+
+        <tr>
+          <td>S7</td><td>User cancels before execution</td>
+          <td><span class="tag fail">Contains failure</span></td>
+          <td>Resolved: the bot must always acknowledge the user's action. Run B is the ideal response; silence (2 of 3 runs) is the failure.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r-s7')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r-s7"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">No bot turn generated — treated as silent abandonment. <b>Fail</b> — a user action went unacknowledged.</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"Your rate lock offer has expired. Start a new lock anytime." <b>Ideal</b> — closes the loop even on a cancellation.</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">No bot turn generated, matching Run A. <b>Fail</b>, same reason.</div></div>
+          <div class="criteria-grid">
+            <div>Resolution accuracy: Fail</div><div>Sequence/CTA: N/A</div><div>Factual grounding: Pass</div><div>Persona/tone: N/A</div><div>Clarity/closure: Fail</div>
+          </div>
+        </td></tr>
+      </table>
+
+      <h2 class="section-title">Root cause grouping</h2>
+
+      <div class="card rootcause-card">
+        <h3>A — Invented remedies aren't the problem; unresolved CTAs and dead ends are</h3>
+        <div class="scenario-list"><span class="scenario-chip">S3</span><span class="scenario-chip">S5</span><span class="scenario-chip">S6</span></div>
+        <p>Turncraft is meant to suggest reasonable responses for states the guidelines don't explicitly cover — that's a feature, not a defect, and a tool that can only ever repeat pre-written material is worth less than one that can extend it sensibly. The actual failure mode isn't invention, it's leaving the user without a concrete next step, or letting a suggestion quietly take over the CTA slot instead of staying in the message copy.</p>
+        <table style="margin:10px 0 4px;">
+          <tr><th>Scenario</th><th>What's valid</th><th>What fails</th></tr>
+          <tr><td>S3</td><td>Runs A and B — both CTAs resolve to viewing/managing existing locks. The tier-upgrade mention in Run B is fine as suggestive color, not as the CTA.</td><td>Run C — no CTA at all. A dead end.</td></tr>
+          <tr><td>S5</td><td>All three runs (view / cancel / complete) name a real action — none is wrong.</td><td>None is complete alone. The fix is a component, not a CTA choice: show the pending lock as a card with "Cancel" and "Complete" actions in it.</td></tr>
+          <tr><td>S6</td><td>Run A — "Notify me when available," the action a blocked user most likely wants first.</td><td>Run B — silence, a dead end, unacceptable regardless of the invention principle. Run C — offers an alternative as a competing CTA instead of a suggestion in the message.</td></tr>
+        </table>
+        <div class="fix"><b>Fix (Trading flows subsection):</b> "When a rate-lock-adjacent state has no explicit remedy defined, the bot may suggest context in its message, but the CTA must resolve to a concrete, always-available action — most often viewing or managing the user's existing state. Never end a turn without an actionable next step. Where a relevant lock or transaction already exists, render it as a card with its own actions (e.g. cancel, complete) rather than collapsing everything into one generic CTA."</div>
+      </div>
+
+      <div class="card rootcause-card">
+        <h3>B — A scenario definition bundles two distinct system states</h3>
+        <div class="scenario-list"><span class="scenario-chip">S4</span></div>
+        <p>"Not verified or suspended" reads as one condition but requires two different governed responses. Each run picked a different assumption, and one run tried to hedge both in a single turn — which broke a separate rule (one focused action per turn). Confirmed as valid: the two states need to be differentiated, each resolving to one focused action.</p>
+        <div class="fix"><b>Fix:</b> split S4 into S4a (KYC incomplete → "Complete verification") and S4b (suspended/flagged → apply the Account Restrictions rule verbatim: never speculate why, provide the next verified step only, e.g. "Contact support") — one CTA per turn, never both. This is a scenario-authoring fix in <code>fintech-scenarios.md</code>, not the guidelines file — and it's the "missing scenarios" failure mode from the original Substack piece, showing up concretely.</div>
+      </div>
+
+      <div class="card rootcause-card">
+        <h3>C — "Lead with the number" has no fallback clause</h3>
+        <div class="scenario-list"><span class="scenario-chip">S6</span><span class="scenario-chip">S2</span></div>
+        <p>The rule assumes a number always exists to lead with. S6 has none (market's closed); S2's most relevant number is a shortfall, not a rate — the rule doesn't disambiguate which number applies when the obvious one is missing.</p>
+        <div class="fix"><b>Fix:</b> in the same <i>Trading flows</i> subsection, add one sentence — "If no rate is available, lead with the blocker instead of the rate."</div>
+      </div>
+
+      <div class="card rootcause-card">
+        <h3>D — Silence is not a valid resolution</h3>
+        <div class="scenario-list"><span class="scenario-chip">S7</span></div>
+        <p>Guidelines don't currently say what happens when a user abandons a flow or lets it expire before confirming — so silence looked like a defensible option only because nothing ruled it out. On review, it isn't: every user-initiated action, including a cancellation, deserves acknowledgment. Run B ("Your rate lock offer has expired. Start a new lock anytime.") is the correct behavior; the silent runs are the failure.</p>
+        <div class="fix"><b>Fix (Trading flows subsection):</b> "If a user lets a rate lock offer expire or abandons before confirming, don't stay silent — acknowledge what happened and invite them to start again. Never leave a user action unaddressed."</div>
+      </div>
+
+    </div>
+
+    <!-- CHANGELOG -->
+    <div class="section-view" id="v1-changelog">
+
+      <h2 class="section-title">Applied</h2>
+      <div class="card">
+        <p>Six additions written to <code>unified-conversation-design-principles-v2.md</code>:</p>
+        <p>— <b>Trading flows:</b> fix C (fallback when no rate is available), fix A (unavailable-state CTA + card pattern), a follow-up line resolving the S6 open decision (intent-continuity over redirect, soft-commitment framing for unconfirmed capabilities), and fix D (acknowledge cancellations, don't go silent).</p>
+        <p>— <b>State resolution:</b> the suspended/flagged exception carve-out, so it's no longer treated as an incomplete verification stage.</p>
+        <p>The original guidelines file is untouched — confirmed by diff. Fix B (the S4 → S4a/S4b split) and a new scenario-authoring convention ("simulate from the natural entry point," resolving the S1 ambiguity) are both applied directly to <code>fintech-scenarios.md</code>, since it's private test-set data, not a public artifact worth versioning the same way.</p>
+        <p><b>Done:</b> re-run against v2, 3 passes each, via cold-started independent agents — see the <i>Guidelines v2</i> tab for results.</p>
+        <p><b>Next:</b> a second cold-validation pass to confirm the S6 and S1 fixes hold, now that both are settled.</p>
+      </div>
+
+      <h2 class="section-title">Deferred</h2>
+      <div class="card">
+        <p>S1's confirm-CTA wording drift is a real ambiguity but low-severity — worth a future pass, not urgent enough to bundle into this round's fixes (A, B, C, D).</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================== VERSION: v2 ===================== -->
+  <section class="version-panel" id="panel-v2">
+
+    <div class="section-nav">
+      <button class="section-btn active" data-section="process">Process</button>
+      <button class="section-btn" data-section="findings">Findings</button>
+      <button class="section-btn" data-section="changelog">Changelog</button>
+    </div>
+
+    <!-- PROCESS -->
+    <div class="section-view active" id="v2-process">
+      <div class="card">
+        <div class="meta-row">
+          <span>Guidelines under test:</span>
+          <a href="https://github.com/cindysuryautama/turncraft-chatbot-conversation-designer/blob/a43e0490bb702337f5f4c9bb32456417fa407758/materials/unified-conversation-design-principles.md" target="_blank" rel="noopener">unified-conversation-design-principles.md</a>
+          <a href="https://github.com/cindysuryautama/turncraft-chatbot-conversation-designer" target="_blank" rel="noopener">repo →</a>
+        </div>
+        <p>Same test set, same rubric, same 3-runs-per-scenario method as v1 — see the <i>Guidelines v1 → Process</i> tab for the full methodology. This section only notes what's different this round.</p>
+      </div>
+
+      <h2 class="section-title">What's different from the v1 pass</h2>
+      <div class="card">
+        <p><b>Test set is now 8 scenarios, not 7.</b> Fix B split S4 into S4a (KYC incomplete) and S4b (suspended/flagged) in <code>fintech-scenarios.md</code> — both are included here. This is the fix working as intended, not scope drift.</p>
+        <p><b>Guidelines file is v2</b>, with the four additions logged in the Guidelines v1 → Changelog tab: the lead-with-the-blocker fallback (fix C), the unavailable-state CTA/card pattern (fix A), the acknowledge-on-cancellation rule (fix D), and the suspended/flagged carve-out in State resolution.</p>
+      </div>
+
+      <h2 class="section-title">Validation method — cold, independent runs</h2>
+      <div class="card">
+        <p>An earlier pass in this eval generated the v2 responses in the same session used to write the rules, by the same author, with full knowledge of exactly which behavior each new line was meant to produce. That's a source of bias no same-session pass can rule out on its own — convergence in that pass was partly expected by construction, not proof the rules read clearly to a model encountering them with no memory of writing them.</p>
+        <p>The results below replace that pass. They come from <b>3 independently spawned agents</b>, each started fresh with no memory of this conversation, the eval history, the root causes, or what a "correct" answer was expected to look like. Each was given only the two source files — <code>unified-conversation-design-principles-v2.md</code> and the Rate Lock table in <code>fintech-scenarios.md</code> — and asked to generate the 8 scenario responses cold, with no other context. This is the strongest form of validation available without operating the deployed HTML artifact directly.</p>
+      </div>
+    </div>
+
+    <!-- FINDINGS -->
+    <div class="section-view" id="v2-findings">
+
+      <h2 class="section-title">Cold-run results</h2>
+      <div class="stat-row">
+        <div class="stat pass"><div class="num">6 / 8</div><div class="label">consistent across all 3 independent agents</div></div>
+        <div class="stat weak"><div class="num">2 / 8</div><div class="label">flagged — one new ambiguity, one open design decision</div></div>
+        <div class="stat pass"><div class="num">0 / 8</div><div class="label">dead ends, silence, or rule violations</div></div>
+      </div>
+      <p style="font-size:13.5px;color:#4a463f;max-width:680px;margin:-4px 0 16px;">The point of running this cold wasn't to confirm the same-session result — it was to find what that pass couldn't see. It found something: S6 did not converge the way the same-session pass predicted, and it's a legitimate open question, not a bug.</p>
+
+      <table id="findingsTableV2">
+        <tr><th>ID</th><th>Scenario</th><th>Consistency</th><th>Rubric read-out</th><th></th></tr>
+
+        <tr>
+          <td>S1</td><td>Rate locked successfully</td>
+          <td><span class="tag weak">New ambiguity</span></td>
+          <td>2 of 3 agents generate the full lock → confirm → success sequence; 1 shows only the terminal "already locked" state with a single CTA, skipping the confirmation step entirely. Not caught in the same-session pass. Confirm-CTA wording drift also persists, as expected (deferred item, untouched this round).</td>
+          <td><button class="expand-btn" onclick="toggleRun('r2-s1')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r2-s1"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"1 BTC locked at $67,420. This rate is guaranteed for 10 minutes." → Rate Card → Confirmation Overlay (amount, rate, fee, expiry) → Success Banner + Transaction Card. CTA: "Lock this rate" → "Confirm lock" → "View lock details".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"1 BTC locked at $61,240. This rate is guaranteed for the next 10 minutes." → Rate card (pair, rate, amount, countdown) only. CTA: "View lock details" — no separate lock/confirm step shown at all.</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"Locked: 1 USDT = $0.999 for the next 10 minutes." then "Confirm before it expires — fees included in total below." → Confirmation overlay (rate, amount, fee, total, expiry). CTA: "Lock this rate" → "Confirm order" / "Cancel order". Internally a little contradictory — says "Locked" then asks to "Confirm."</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Weak</div><div>Sequence/CTA: Weak</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S2</td><td>Insufficient funds for lock</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents lead with the shortfall figure, not the rate — fix C holds independently of same-session bias.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r2-s2')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r2-s2"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You need at least $500 to lock this rate. Your available balance is $210." → Balance Warning Banner. CTA: "Deposit USD".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"You need $500 more to lock this rate for 1 BTC. Your available balance is $60,740." → Balance warning banner. CTA: "Deposit USD".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"You need 250 USDT to lock this rate — your available balance is 180 USDT." → Balance warning banner. CTA: "Deposit USDT".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S3</td><td>Rate lock limit reached</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents independently render existing locks as a card with per-item actions and a "Manage locks"-style CTA. No dead end, no invented tier-upgrade capability. Strong confirmation of fix A.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r2-s3')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r2-s3"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You've reached your limit of 3 active rate locks. Manage an existing lock to free up a slot." → Active Locks Card (each lock: rate, expiry, actions). CTA: "Manage locks"; per-lock "Cancel"/"Complete".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"You've reached your limit of 3 active rate locks. Complete or cancel one to open a new slot." → Active locks card. CTA: "Manage locks".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"You've reached your limit of 3 active rate locks for your tier." → Active locks list card. CTA: "Manage active locks"; per-card "Cancel".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S4a</td><td>Account not verified (KYC incomplete)</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents converge tightly; clean single-condition scenario post-split.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r2-s4a')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r2-s4a"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You'll need to finish verification before locking a rate. It only takes a couple of minutes." → Verification Status Banner. CTA: "Continue verification".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">Same bubble → Verification status banner. CTA: "Complete verification".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"You'll need to finish verification before locking a rate." → Verification status banner. CTA: "Continue verification".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S4b</td><td>Account suspended or flagged</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents produce one focused CTA with no speculation on cause, routing to a verified step — the State resolution carve-out holds independently. Minor CTA label variation only.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r2-s4b')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r2-s4b"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"Your account is currently restricted, so rate locks aren't available. Contact support for the next step." → Account Restriction Banner (no cause speculated). CTA: "Contact support".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"Rate locks aren't available on this account right now. Here's the verified next step to resolve it." → Account restriction banner. CTA: "Start account review" — label variation, same single-action shape.</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"Your account is restricted, so rate locks aren't available right now." + "Submit a ticket and our team will confirm the next step." → Account restriction banner. CTA: "Contact support".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S5</td><td>Rate lock already pending</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents independently render the pending lock as a card with "Complete"/"Cancel" in-card actions — the card-pattern fix generalizes without having been shown examples.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r2-s5')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r2-s5"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You already have a lock in progress on BTC/USD at $67,180, expiring in 4 minutes." → Pending Lock Card (rate, amount, countdown, status). CTA (on card): "Complete this lock", "Cancel lock".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"You already have a rate lock in progress for BTC/USD at $61,180, expiring in 4 minutes." → Pending lock card. CTA: "Complete this lock".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"You already have a rate lock in progress on USDT/USD — 1 USDT = $0.999, expires in 6 minutes." → Existing lock card. CTA (on card): "Complete lock", "Cancel lock".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S6</td><td>Market closed or illiquid</td>
+          <td><span class="tag weak">Open design decision</span></td>
+          <td>All 3 agents agree with <i>each other</i> — none agree with the same-session pass. Every fresh run defaults to "view other pairs/markets/rates" as the CTA; none produce "Notify me when available." No dead end in any run, but the intended fix wasn't confirmed as written — see Root causes below.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r2-s6')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r2-s6"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"USDT/USD isn't available to lock right now due to low liquidity. Your other pairs are unaffected." → Instrument Unavailable Banner. CTA: "View available pairs".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"BTC/USD isn't available to lock right now due to low liquidity. You can check current market status or explore other pairs." → Market status banner. CTA: "View available markets".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"USDT/USD isn't trading right now — the market's closed for this pair." + "You can check back shortly or view rates for other pairs." → Availability banner. CTA: "View other rates".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Weak</div><div>Sequence/CTA: Weak</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S7</td><td>User cancels before execution</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents acknowledge the cancellation — fix D generalizes cleanly to a genuinely cold read. All three also framed it as an explicit cancellation ("nothing was charged") rather than a passive expiry, a slightly different emphasis than the same-session pass, not a failure.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r2-s7')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r2-s7"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"Your rate lock was cancelled. Want to start a new one?" CTA: "Start new lock".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"Your rate lock was cancelled. No charges were made. Want to lock a new rate?" CTA: "Lock a new rate".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"Your rate lock was cancelled — nothing was charged. Want to lock a rate again?" CTA: "Lock a new rate".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: N/A</div><div>Factual grounding: Pass</div><div>Persona/tone: N/A</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+      </table>
+
+      <h2 class="section-title">Root causes — resolution status</h2>
+      <div class="card">
+        <p><b>A</b> (unavailable states — S3, S5, S6): resolved. The card-pattern default (S3, S5) holds independently and strongly. S6's open gap — no existing record to anchor a CTA to — is now covered by a new line: prioritize continuing the user's original goal over redirecting, and phrase any unconfirmed capability as a soft gesture rather than a guaranteed mechanism. Not yet re-validated cold.</p>
+        <p><b>B</b> (bundled scenario — S4): resolved. S4a and S4b each resolve to one clean, single CTA across all 3 independent runs, with no hedging.</p>
+        <p><b>C</b> (no fallback for "lead with the number"): resolved. S2 and S6 both correctly lead with the blocker, not the rate, across all runs.</p>
+        <p><b>D</b> (silence on cancellation — S7): resolved. Every independent run closes the loop.</p>
+        <p style="margin-top:10px;"><b>New, from cold validation:</b> S1's scope ambiguity (full sequence vs. terminal state) wasn't visible in the same-session pass. Resolved with a scenario-authoring convention in <code>fintech-scenarios.md</code>: simulate every condition from its natural entry point, even when the label names an outcome. Not yet re-validated cold.</p>
+        <p><b>Still open:</b> confirming S6 + S1's fixes hold under a second cold-validation pass. S1's CTA-wording drift (a separate, lower-severity item) remains deferred by design.</p>
+      </div>
+
+    </div>
+
+    <!-- CHANGELOG -->
+    <div class="section-view" id="v2-changelog">
+
+      <h2 class="section-title">Applied</h2>
+      <div class="card">
+        <p><b>S6 — CTA direction, settled.</b> The tension was between a redirect that's safe but abandons the user's original goal ("view other pairs") and an action that continues the goal but may not be a confirmed capability ("notify me when available"). Decision: prioritize continuing the user's original goal over redirecting to a different one, since a redirect reads as the bot giving up. Where the continuing action depends on an unconfirmed capability, phrase it as a soft, low-commitment gesture ("Want us to flag you when it's back?") rather than a guaranteed mechanism — honest either way, whether or not the feature exists. Only fall back to a plain redirect if no honest intent-continuing option exists, framed as a detour, not a replacement. Added as a new bullet in <i>Trading flows</i>, alongside — not replacing — the existing card-pattern line for scenarios with an existing record (S3, S5).</p>
+        <p><b>S1 — scope ambiguity, settled.</b> The issue: S1 is the only scenario labeled with an outcome ("locked successfully") rather than a triggering condition, and nothing specified whether to simulate the full initiation-to-completion sequence or just the terminal state. Decision: scenarios are always simulated from their natural entry point through to resolution, even when the label names an outcome. Added as a methodology note in <code>fintech-scenarios.md</code>, directly above the Scenario Bank tables — a testing/authoring convention, not a change to how the bot behaves in production.</p>
+        <p><b>Review mechanism confirmed:</b> the designer reviews generated responses and can suggest a tweak if a CTA isn't the intended one — this is the live feedback loop the guidelines are meant to support, not a one-time fix-and-forget.</p>
+      </div>
+
+      <h2 class="section-title">Pending</h2>
+      <div class="card">
+        <p>Neither the S6 nor the S1 fix has been cold-validated yet. Both were reasoned through and agreed in conversation, then written directly into <code>unified-conversation-design-principles-v2.md</code> and <code>fintech-scenarios.md</code> — the same kind of same-session authorship the original v2 caveat was about. A second round of independent, fresh-started agents against the updated materials is the next step before treating either as confirmed.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================== VERSION: v3 ===================== -->
+  <section class="version-panel" id="panel-v3">
+
+    <div class="section-nav">
+      <button class="section-btn active" data-section="process">Process</button>
+      <button class="section-btn" data-section="findings">Findings</button>
+      <button class="section-btn" data-section="changelog">Changelog</button>
+    </div>
+
+    <!-- PROCESS -->
+    <div class="section-view active" id="v3-process">
+      <div class="card">
+        <div class="meta-row">
+          <span>Guidelines under test:</span>
+          <a href="https://github.com/cindysuryautama/turncraft-chatbot-conversation-designer/blob/25cca76f22bc52b7f916b0dd09d21d2c6aa62c7a/materials/unified-conversation-design-principles.md" target="_blank" rel="noopener">unified-conversation-design-principles.md</a>
+          <a href="https://github.com/cindysuryautama/turncraft-chatbot-conversation-designer" target="_blank" rel="noopener">repo →</a>
+        </div>
+        <p>Same test set, same rubric, same 3-independent-cold-agent method as v2 — see <i>Guidelines v1 → Process</i> for the full methodology. This tab covers the last remaining open item from v2: whether the S6 fix actually resolves cleanly, including a piece that took two rounds of cold testing to fully expose.</p>
+      </div>
+
+      <h2 class="section-title">What's different from v2</h2>
+      <div class="card">
+        <p>One addition to the <i>Trading flows</i> subsection, appended to the existing S6 bullet: <b>"This intent-continuing action is the primary CTA; a plain redirect, if offered at all, is secondary."</b></p>
+        <p>This came from a two-step process, not a single guess:</p>
+        <p>— A first cold round (documented under <i>Guidelines v2 → Findings</i>) tested the original S6 fix and found the soft-gesture CTA ("flag me when it's back") now reliably appears — a real improvement over the same-session pass, which produced it in none of 3 runs. But 1 of 3 independent agents still put a plain redirect ahead of it as the primary action. The fix specified <i>what</i> to prioritize, but not <i>how</i> that priority should surface in the interface.</p>
+        <p>— That gap is what this one-line addition closes. The findings below are from testing it cold, fresh, against the updated wording — not a repeat of the earlier round.</p>
+      </div>
+    </div>
+
+    <!-- FINDINGS -->
+    <div class="section-view" id="v3-findings">
+
+      <h2 class="section-title">Cold-run results</h2>
+      <div class="stat-row">
+        <div class="stat pass"><div class="num">8 / 8</div><div class="label">consistent across all 3 independent agents</div></div>
+        <div class="stat pass"><div class="num">0 / 8</div><div class="label">flagged or partially resolved</div></div>
+        <div class="stat pass"><div class="num">0 / 8</div><div class="label">dead ends, silence, or rule violations</div></div>
+      </div>
+      <p style="font-size:13.5px;color:#4a463f;max-width:680px;margin:-4px 0 16px;">S1–S5 and S7 are included for completeness — they were already resolved and hold again here. S6 is the scenario this round exists to check, and it's the one worth reading closely: all 3 independent agents now agree not just on the CTA's content, but on its priority.</p>
+
+      <table id="findingsTableV3">
+        <tr><th>ID</th><th>Scenario</th><th>Consistency</th><th>Rubric read-out</th><th></th></tr>
+
+        <tr>
+          <td>S1</td><td>Rate locked successfully</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents render the full lock → confirm → success sequence, no run skips to a terminal state. Confirm/success CTA wording still drifts slightly ("Complete trade" / "Complete purchase") — the pre-existing, separately deferred wording item, unrelated to scope and untouched this round.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r3-s1')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r3-s1"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">Rate card (BTC/USDT, 30-sec window) → "Lock this rate" → confirmation overlay w/ fee → "Confirm lock" → success banner + transaction card → "Complete trade" / "View lock details".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">Rate card (USDT/USD 1.00, 10-min window) → "Lock this rate" → confirmation overlay w/ fee → "Confirm lock" → success banner + transaction card → "Complete purchase" / "View lock details".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">Rate card (USDT/USD 1.00, 10-min window) → "Lock this rate" → confirmation overlay w/ fee → "Confirm lock" → success banner + transaction card → "Complete trade" / "View lock details".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S2</td><td>Insufficient funds for lock</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents lead with the shortfall figure, no rate card shown, blocker-fix CTA primary.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r3-s2')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r3-s2"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You need 31,252.50 USDT to lock this rate. Your balance is 18,400.00 USDT." CTA: "Deposit USDT" / "Adjust amount".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"You need 500 USDT to lock this rate. Your available balance is 320 USDT." → Warning banner. CTA: "Deposit USDT" / "Adjust trade amount".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"You need 500.50 USDT to lock this rate. Your available balance is 312.40 USDT." → Insufficient balance banner. CTA: "Deposit USDT" / "Lower trade amount".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S3</td><td>Rate lock limit reached</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents render existing locks as cards with per-lock actions, primary CTA anchored to managing them — no dead end, no invented capability.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r3-s3')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r3-s3"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You've reached your limit of 3 active rate locks for your tier." → Active locks card, each with Complete/Cancel. CTA: "Manage active locks" (primary) / "View tier limits" (secondary).</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"You've reached your limit of 3 active rate locks. Complete or cancel one to free up a slot." → Active locks list, each with own actions. CTA: "Manage active locks" (primary) / "View lock limits by tier" (secondary).</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"You've reached your limit of 3 active rate locks. Complete or cancel one to open a new slot." → Active locks cards w/ Complete/Cancel. CTA: "Manage active locks" (primary).</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S4a</td><td>Account not verified (KYC incomplete)</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents converge on a single verification CTA, no rate or balance shown yet.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r3-s4a')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r3-s4a"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You'll need to finish verification before locking a rate." CTA: "Complete verification".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"You'll need to finish verification before locking a rate. You're a few steps from done." → Verification status card. CTA: "Continue verification" / "Check verification status".</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"You'll need to finish verification before locking a rate. It takes a few minutes." → Verification required banner. CTA: "Verify identity".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S4b</td><td>Account suspended or flagged</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents route straight to Account Restrictions with no speculation on cause and one focused next step.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r3-s4b')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r3-s4b"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"Your account is restricted, so rate locks aren't available right now." CTA: "View restriction details" (primary) / "Contact support" (secondary).</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"This account is currently restricted, so I can't process a rate lock right now." CTA: "Start ID verification" (primary) / "Contact support" (secondary).</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"Your account is restricted, so rate locks aren't available right now. Verifying your identity is the next step to resolve this." CTA: "Verify identity" (primary) / "Contact support" (secondary).</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S5</td><td>Rate lock already pending</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents render the existing lock as a card with in-card Complete/Cancel actions, primary CTA continuing toward completion.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r3-s5')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r3-s5"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"You already have an active lock on BTC/USDT." → Existing lock card. CTA: "Complete this lock" (primary) / "Cancel this lock" (secondary).</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"You already have an open rate lock on USDT/USD. You can only hold one at a time for this pair." → Existing lock card. CTA: "Complete this lock" (primary) / "Cancel this lock" (secondary).</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"You already have an active lock on USDT/USD. Only one lock per instrument is allowed at a time." → Active rate lock card. CTA: "Complete trade" (primary) / "Cancel lock" (secondary).</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S6</td><td>Market closed or illiquid</td>
+          <td><span class="tag pass">Resolved</span></td>
+          <td>All 3 independent agents now agree on both the CTA's content <b>and</b> its priority: the soft, intent-continuing gesture leads as the primary CTA, and any redirect is secondary and framed as a detour. The ordering gap found in the v2 round is closed — this is the first scenario in this eval where a fix needed two full cold rounds to land cleanly, and it's documented that way on purpose.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r3-s6')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r3-s6"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"BTC/USDT isn't tradable right now — the market's closed." CTA (primary): "Notify me when it's back". CTA (secondary): "Browse other markets".</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"BTC/USD isn't trading right now — the market's halted. I can't lock a rate until it reopens." CTA (primary): "Let me know when it's back". CTA (secondary): "Browse other pairs" — framed as a detour, original request stays open.</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"BTC/USD is closed right now due to low liquidity. No rate is available to lock at the moment." CTA (primary): "Notify me when it's back". CTA (secondary): "Browse other pairs".</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: Pass</div><div>Factual grounding: Pass</div><div>Persona/tone: Pass</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+
+        <tr>
+          <td>S7</td><td>User cancels before execution</td>
+          <td><span class="tag pass">Consistent</span></td>
+          <td>All 3 agents explicitly acknowledge the cancellation and offer a single re-entry CTA, no dead end.</td>
+          <td><button class="expand-btn" onclick="toggleRun('r3-s7')">Runs</button></td>
+        </tr>
+        <tr class="run-detail" id="r3-s7"><td colspan="5">
+          <div class="run-block"><div class="run-label">Run A</div><div class="run-text">"Your lock on BTC/USDT at 62,480.00 USDT was cancelled. Nothing was charged." CTA: "Lock a new rate" (primary) / "View markets" (secondary).</div></div>
+          <div class="run-block"><div class="run-label">Run B</div><div class="run-text">"Your rate lock was cancelled. Nothing was charged." CTA: "Lock a new rate" (primary) / "Back to markets" (secondary).</div></div>
+          <div class="run-block"><div class="run-label">Run C</div><div class="run-text">"Your rate lock was cancelled. The 1.00 USDT/USD rate is no longer held." CTA: "Lock a new rate" — single re-entry action, no secondary needed.</div></div>
+          <div class="criteria-grid"><div>Resolution accuracy: Pass</div><div>Sequence/CTA: N/A</div><div>Factual grounding: Pass</div><div>Persona/tone: N/A</div><div>Clarity/closure: Pass</div></div>
+        </td></tr>
+      </table>
+
+      <h2 class="section-title">Root causes — resolution status</h2>
+      <div class="card">
+        <p><b>A</b> (unavailable states — S3, S5, S6): fully resolved. The card pattern (S3, S5) and the S6 intent-continuing CTA — now confirmed correct in both content and priority — all hold across two independent cold rounds.</p>
+        <p><b>B</b> (bundled scenario — S4): resolved. S4a/S4b remain clean, single-CTA, no hedging, confirmed twice.</p>
+        <p><b>C</b> (no fallback for "lead with the number"): resolved, confirmed twice.</p>
+        <p><b>D</b> (silence on cancellation — S7): resolved, confirmed twice.</p>
+        <p><b>S1 scope ambiguity:</b> resolved, confirmed twice — every run simulates the full sequence from entry point to close.</p>
+        <p style="margin-top:10px;">Every root cause identified in the v1 baseline is now resolved and independently confirmed.</p>
+      </div>
+
+    </div>
+
+    <!-- CHANGELOG -->
+    <div class="section-view" id="v3-changelog">
+
+      <h2 class="section-title">Applied</h2>
+      <div class="card">
+        <p><b>S6 — CTA priority, added and confirmed.</b> One sentence appended to the existing S6 bullet in <i>Trading flows</i>: "This intent-continuing action is the primary CTA; a plain redirect, if offered at all, is secondary." Written in response to a gap a prior cold round surfaced — the original fix specified <i>what</i> to prioritize but not <i>how</i> that priority should appear in the interface. Cold-tested fresh against the updated wording: all 3 independent agents now agree on both the CTA and its ordering.</p>
+        <p>This is the only scenario in the eval that needed two full cold rounds to resolve cleanly — the first found the gap, the second confirms the fix. Documented as two rounds rather than folded into one, since that's the more honest account of how the fix was actually reached.</p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Eval log for Turncraft, a chatbot conversation design tool. Methodology, findings, and fixes are documented here as each guideline version is tested. Repo: <a href="https://github.com/cindysuryautama/turncraft-chatbot-conversation-designer" style="color:var(--rust);">github.com/cindysuryautama/turncraft-chatbot-conversation-designer</a>
+</footer>
+
+<script>
+  document.querySelectorAll('.version-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.version-tab').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.version-panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-'+btn.dataset.version).classList.add('active');
+    });
+  });
+  document.querySelectorAll('.section-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const panel = btn.closest('.version-panel');
+      panel.querySelectorAll('.section-btn').forEach(b=>b.classList.remove('active'));
+      panel.querySelectorAll('.section-view').forEach(v=>v.classList.remove('active'));
+      btn.classList.add('active');
+      const target = document.getElementById(panel.id.replace('panel-','')+'-'+btn.dataset.section);
+      if(target) target.classList.add('active');
+    });
+  });
+  function toggleRun(id){
+    document.getElementById(id).classList.toggle('open');
+  }
+</script>
+
+</body>
+</html>
